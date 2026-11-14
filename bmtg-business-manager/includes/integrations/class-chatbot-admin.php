@@ -76,7 +76,8 @@ class Chatbot_Admin {
 		?>
 		<div class="wrap">
 			<h1>BMTG Public Website Chatbot</h1>
-			<p>Floating, BMTG-branded chatbot for public pages. Uses Groq (primary) and OpenRouter (fallback) via <a href="<?php echo esc_url( admin_url('options-general.php?page=bmtg-integrations') ); ?>">Integrations Hub</a>. Public context is isolated from Private Collection/guest data.</p>
+			<p>Floating, BMTG-branded WhatsApp-style chatbot for public pages. Uses Groq (primary) and OpenRouter (fallback) via <a href="<?php echo esc_url( admin_url('options-general.php?page=bmtg-integrations') ); ?>">Integrations Hub</a>. It answers on behalf of <strong>BM Travel Group (bmtravelgroup.com) only</strong> using published website/contact knowledge and does not promote other companies. Public context is isolated from Private Collection/guest data.</p>
+			<p><strong>Meta webhooks (auto-answer):</strong> configure the <em>Meta (Facebook / WhatsApp)</em> connector in Integrations Hub, then set webhook callback URLs to <code><?php echo esc_html( rest_url('bmtg/v1/chatbot/webhook/facebook') ); ?></code> (Messenger) and <code><?php echo esc_html( rest_url('bmtg/v1/chatbot/webhook/whatsapp') ); ?></code> (WhatsApp Cloud) with the matching verify tokens. Subscribe to messages/page events as required by Meta.</p>
 			<form method="post" action="options.php">
 				<?php settings_fields( 'bmtg_chatbot_group' ); ?>
 				<table class="form-table" role="presentation">

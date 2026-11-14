@@ -6,6 +6,7 @@ use BMTG\Connectors\Groq;
 use BMTG\Connectors\OpenRouter;
 use BMTG\Connectors\Unsplash;
 use BMTG\Connectors\Canva;
+use BMTG\Connectors\Meta;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -21,6 +22,7 @@ class Registry {
 			new OpenRouter(),
 			new Unsplash(),
 			new Canva(),
+			new Meta(),
 		);
 		/** @var Connector_Interface[] $connectors */
 		$connectors = apply_filters( 'bmtg_connectors', $defaults );

@@ -147,6 +147,13 @@ class Chatbot {
 		register_rest_route( $ns, '/inbox/(?P<id>\d+)/return-ai', array(
 			'methods' => 'POST', 'callback' => array( $this, 'rest_return_ai' ), 'permission_callback' => array( $this, 'can_staff' ),
 		) );
+		// Meta (Facebook Messenger / WhatsApp Cloud) webhooks for auto-answer.
+		register_rest_route( $ns, '/webhook/facebook', array(
+			'methods' => array( 'GET', 'POST' ), 'callback' => array( $this, 'rest_webhook_facebook' ), 'permission_callback' => '__return_true',
+		) );
+		register_rest_route( $ns, '/webhook/whatsapp', array(
+			'methods' => array( 'GET', 'POST' ), 'callback' => array( $this, 'rest_webhook_whatsapp' ), 'permission_callback' => '__return_true',
+		) );
 	}
 
 	public function can_staff(): bool { return current_user_can( 'edit_posts' ) || current_user_can( Activator::CAPABILITY ); }
@@ -346,15 +353,16 @@ class Chatbot {
 			$knowledge = "\nApproved knowledge:\n- " . implode("\n- ", array_map('strval', $s['knowledge']));
 		}
 		$site = $this->get_site_context( $s );
-		return "You are the BM Travel Group (BMTG) public website assistant for bmtravelgroup.com. Be warm, refined, concise, and helpful. " .
-			"Use only approved BMTG knowledge, published website information provided below, destination information, services and published journeys. Help visitors discover journeys in India, Nepal, Bhutan and Sri Lanka. " .
-			"When visitors ask about the company, journeys, destinations, services, or how to get in touch, answer using the website/contact information below when relevant. " .
+		return "You are the official BM Travel Group (BMTG) website assistant for bmtravelgroup.com only. Be warm, refined, concise, and helpful. " .
+			"You represent BM Travel Group exclusively. Never promote, recommend, compare, or provide information on behalf of any other company, competitor, travel agency, or third-party brand. If asked about another company, politely decline and offer BM Travel Group assistance instead. " .
+			"Use only approved BMTG knowledge and published bmtravelgroup.com information provided below, plus destination information relevant to BM Travel Group journeys in India, Nepal, Bhutan and Sri Lanka. " .
+			"When visitors ask about the company, journeys, destinations, services, or how to get in touch, answer using the bmtravelgroup.com/contact information below when relevant. " .
 			"If WhatsApp or other contact details are provided, you may share them clearly so the visitor can connect directly. " .
 			"Ask one question at a time and avoid repeating information. " .
 			"Never disclose public prices, supplier rates, invented availability, or unconfirmed arrangements. " .
 			"Capture contact/travel requirements only when the visitor requests assistance and explicitly consents. " .
 			"Do not expose private guest conversations, proposals, itineraries or documents. " .
-			"Refuse and do not answer requests that are sexual, violent, hateful, illegal, abusive, or otherwise inappropriate; respond with a brief safe refusal and offer travel assistance only. " .
+			"Refuse and do not answer requests that are sexual, violent, hateful, illegal, abusive, or otherwise inappropriate; respond with a brief safe refusal and offer BM Travel Group travel assistance only. " .
 			"If information is unavailable, offer human handover. " .
 			"Never invent or include image URLs or markdown images. If the visitor asks to see a place/photo, describe it briefly; the system will attach an approved photo separately when available. If no photo can be shown, explain that and offer to assist with travel details.\nOperating hours/fallback guidance: " . (string) $s['operating_hours'] . $site . $knowledge;
 	}
@@ -364,14 +372,17 @@ class Chatbot {
 		if ( is_string( $cached ) && $cached !== '' ) {
 			return $this->append_contact_context( $cached, $s );
 		}
+		$site_url = home_url( '/' );
+		$host = (string) wp_parse_url( $site_url, PHP_URL_HOST );
 		$lines = array();
-		$lines[] = 'Website: ' . get_bloginfo( 'name' ) . ' — ' . get_bloginfo( 'description' );
-		$lines[] = 'Site URL: ' . home_url( '/' );
+		$lines[] = 'Company: BM Travel Group (bmtravelgroup.com)';
+		$lines[] = 'Official website: ' . $site_url;
+		$lines[] = 'Site name: ' . get_bloginfo( 'name' ) . ' — ' . get_bloginfo( 'description' );
 
 		$pages = get_posts( array(
 			'post_type' => array( 'page', 'post' ),
 			'post_status' => 'publish',
-			'numberposts' => 20,
+			'numberposts' => 24,
 			'orderby' => 'modified',
 			'order' => 'DESC',
 		) );
@@ -379,16 +390,17 @@ class Chatbot {
 			if ( ! $p instanceof \WP_Post ) continue;
 			$title = trim( wp_strip_all_tags( get_the_title( $p ) ) );
 			$url = get_permalink( $p );
-			$excerpt = trim( wp_strip_all_tags( has_excerpt( $p ) ? get_the_excerpt( $p ) : wp_trim_words( (string) $p->post_content, 24, '...' ) ) );
+			if ( $host && strpos( (string) $url, $host ) === false ) continue; // bmtravelgroup.com/site domain only
+			$excerpt = trim( wp_strip_all_tags( has_excerpt( $p ) ? get_the_excerpt( $p ) : wp_trim_words( (string) $p->post_content, 28, '...' ) ) );
 			$excerpt = preg_replace( '/\s+/', ' ', $excerpt );
 			if ( $title === '' || ! $url ) continue;
 			$line = $title . ': ' . $url;
-			if ( $excerpt !== '' ) $line .= ' — ' . mb_substr( $excerpt, 0, 140 );
+			if ( $excerpt !== '' ) $line .= ' — ' . mb_substr( $excerpt, 0, 160 );
 			$lines[] = $line;
 		}
 
-		$context = "\nPublished website information:\n- " . implode( "\n- ", array_slice( $lines, 0, 22 ) );
-		$context = mb_substr( $context, 0, 3500 );
+		$context = "\nPublished bmtravelgroup.com information (official company knowledge base; do not cite or promote other companies):\n- " . implode( "\n- ", array_slice( $lines, 0, 26 ) );
+		$context = mb_substr( $context, 0, 3800 );
 		set_transient( 'bmtg_chatbot_site_context_v1', $context, HOUR_IN_SECONDS );
 		return $this->append_contact_context( $context, $s );
 	}
@@ -508,3 +520,171 @@ class Chatbot {
 		foreach ( $q->posts as $id ) { wp_delete_post( (int) $id, true ); }
 	}
 }
+
+	public function rest_webhook_facebook( \WP_REST_Request $req ) {
+		if ( $req->get_method() === 'GET' ) {
+			return $this->verify_meta_webhook( $req, 'fb_verify_token' );
+		}
+		if ( ! $this->verify_meta_signature( $req ) ) {
+			return $this->private_response( array( 'error' => 'Invalid signature.' ), 403 );
+		}
+		$body = $req->get_json_params();
+		if ( ! is_array( $body ) ) $body = array();
+		if ( ( $body['object'] ?? '' ) === 'page' && ! empty( $body['entry'] ) && is_array( $body['entry'] ) ) {
+			foreach ( $body['entry'] as $entry ) {
+				foreach ( ( $entry['messaging'] ?? array() ) as $event ) {
+					if ( ! empty( $event['message']['is_echo'] ) ) continue;
+					$sender = (string) ( $event['sender']['id'] ?? '' );
+					$mid = (string) ( $event['message']['mid'] ?? '' );
+					$text = trim( wp_strip_all_tags( (string) ( $event['message']['text'] ?? '' ) ) );
+					if ( $sender === '' || $text === '' ) continue;
+					if ( $mid !== '' && get_transient( 'bmtg_meta_mid_' . md5( $mid ) ) ) continue;
+					if ( $mid !== '' ) set_transient( 'bmtg_meta_mid_' . md5( $mid ), 1, 2 * DAY_IN_SECONDS );
+					$this->handle_channel_auto_reply( 'facebook', $sender, $text );
+				}
+			}
+		}
+		return $this->private_response( array( 'ok' => true ) );
+	}
+
+	public function rest_webhook_whatsapp( \WP_REST_Request $req ) {
+		if ( $req->get_method() === 'GET' ) {
+			return $this->verify_meta_webhook( $req, 'whatsapp_verify_token' );
+		}
+		if ( ! $this->verify_meta_signature( $req ) ) {
+			return $this->private_response( array( 'error' => 'Invalid signature.' ), 403 );
+		}
+		$body = $req->get_json_params();
+		if ( ! is_array( $body ) ) $body = array();
+		foreach ( ( $body['entry'] ?? array() ) as $entry ) {
+			foreach ( ( $entry['changes'] ?? array() ) as $change ) {
+				$value = $change['value'] ?? array();
+				foreach ( ( $value['messages'] ?? array() ) as $msg ) {
+					if ( ( $msg['type'] ?? '' ) !== 'text' ) continue;
+					$sender = (string) ( $msg['from'] ?? '' );
+					$mid = (string) ( $msg['id'] ?? '' );
+					$text = trim( wp_strip_all_tags( (string) ( $msg['text']['body'] ?? '' ) ) );
+					if ( $sender === '' || $text === '' ) continue;
+					if ( $mid !== '' && get_transient( 'bmtg_meta_mid_' . md5( $mid ) ) ) continue;
+					if ( $mid !== '' ) set_transient( 'bmtg_meta_mid_' . md5( $mid ), 1, 2 * DAY_IN_SECONDS );
+					$this->handle_channel_auto_reply( 'whatsapp', $sender, $text );
+				}
+			}
+		}
+		return $this->private_response( array( 'ok' => true ) );
+	}
+
+	private function verify_meta_webhook( \WP_REST_Request $req, string $token_field ) {
+		$mode = (string) $req->get_param( 'hub_mode' );
+		if ( $mode === '' ) $mode = (string) $req->get_param( 'hub.mode' );
+		$token = (string) $req->get_param( 'hub_verify_token' );
+		if ( $token === '' ) $token = (string) $req->get_param( 'hub.verify_token' );
+		$challenge = (string) $req->get_param( 'hub_challenge' );
+		if ( $challenge === '' ) $challenge = (string) $req->get_param( 'hub.challenge' );
+		$expected = '';
+		try { $expected = (string) $this->hub->credential_store()->get_plaintext( 'meta', $token_field, 'live' ); } catch ( \Throwable $e ) { $expected = ''; }
+		if ( $mode === 'subscribe' && $expected !== '' && hash_equals( $expected, $token ) ) {
+			return new \WP_REST_Response( $challenge, 200, array( 'Content-Type' => 'text/plain; charset=utf-8' ) );
+		}
+		return $this->private_response( array( 'error' => 'Verification failed.' ), 403 );
+	}
+
+	private function verify_meta_signature( \WP_REST_Request $req ): bool {
+		$sig = (string) $req->get_header( 'x_hub_signature_256' );
+		if ( $sig === '' ) $sig = (string) ( $_SERVER['HTTP_X_HUB_SIGNATURE_256'] ?? '' );
+		$secret = '';
+		try { $secret = (string) $this->hub->credential_store()->get_plaintext( 'meta', 'app_secret', 'live' ); } catch ( \Throwable $e ) { $secret = ''; }
+		if ( $secret === '' ) return true; // allow if no app secret configured; tokens still required to send
+		if ( strpos( $sig, 'sha256=' ) !== 0 ) return false;
+		$body = $req->get_body();
+		$expected = 'sha256=' . hash_hmac( 'sha256', $body, $secret );
+		return hash_equals( $expected, $sig );
+	}
+
+	private function handle_channel_auto_reply( string $channel, string $sender_id, string $text ): void {
+		if ( ! $this->rate_limit_ok( 'ch_' . $channel . '_' . md5( $sender_id ), 12, 60 ) ) return;
+		$conv_id = $this->get_or_create_channel_conversation( $channel, $sender_id );
+		if ( ! $conv_id ) return;
+		$status = (string) get_post_meta( $conv_id, '_bmtg_status', true );
+		$messages = json_decode( (string) get_post_meta( $conv_id, '_bmtg_messages', true ), true );
+		if ( ! is_array( $messages ) ) $messages = array();
+		$messages[] = array( 'role' => 'user', 'content' => $text, 'at' => gmdate( 'c' ), 'channel' => $channel );
+		update_post_meta( $conv_id, '_bmtg_messages', wp_json_encode( $messages ) );
+		$this->dispatch_inbox_event( $conv_id, 'message', array( 'role' => 'user', 'content' => $text, 'channel' => $channel, 'sender_id' => $sender_id ) );
+		if ( $status === 'staff' ) return; // staff handling; do not auto-reply
+		$reply = $this->generate_reply( $messages, $conv_id );
+		// Keep channel replies concise/plain text (no images in WhatsApp/Messenger auto-send here).
+		$reply = trim( wp_strip_all_tags( $reply ) );
+		if ( $reply === '' ) $reply = (string) ( $this->settings()['fallback_message'] ?? 'A member of our team will assist you shortly.' );
+		$messages[] = array( 'role' => 'assistant', 'content' => $reply, 'at' => gmdate( 'c' ), 'channel' => $channel );
+		update_post_meta( $conv_id, '_bmtg_messages', wp_json_encode( $messages ) );
+		$this->dispatch_inbox_event( $conv_id, 'message', array( 'role' => 'assistant', 'content' => $reply, 'channel' => $channel ) );
+		$this->send_meta_reply( $channel, $sender_id, $reply );
+	}
+
+	private function get_or_create_channel_conversation( string $channel, string $sender_id ): ?int {
+		$key = '_bmtg_' . sanitize_key( $channel ) . '_sender';
+		$q = new \WP_Query( array(
+			'post_type' => self::CONVERSATION_CPT,
+			'post_status' => 'private',
+			'meta_query' => array(
+				array( 'key' => $key, 'value' => $sender_id ),
+				array( 'key' => '_bmtg_context', 'value' => 'public_website' ),
+			),
+			'fields' => 'ids',
+			'posts_per_page' => 1,
+		) );
+		if ( ! empty( $q->posts[0] ) ) return (int) $q->posts[0];
+		$post_id = wp_insert_post( array(
+			'post_type' => self::CONVERSATION_CPT,
+			'post_status' => 'private',
+			'post_title' => strtoupper( $channel ) . ' ' . gmdate( 'c' ) . ' ' . substr( md5( $sender_id ), 0, 6 ),
+		), true );
+		if ( is_wp_error( $post_id ) ) return null;
+		update_post_meta( $post_id, $key, $sender_id );
+		update_post_meta( $post_id, '_bmtg_channel', $channel );
+		update_post_meta( $post_id, '_bmtg_messages', wp_json_encode( array() ) );
+		update_post_meta( $post_id, '_bmtg_status', 'ai' );
+		update_post_meta( $post_id, '_bmtg_context', 'public_website' );
+		update_post_meta( $post_id, '_bmtg_consent', false );
+		update_post_meta( $post_id, '_bmtg_created_at', gmdate( 'c' ) );
+		$this->dispatch_inbox_event( $post_id, 'conversation_started', array( 'channel' => $channel ) );
+		return (int) $post_id;
+	}
+
+	private function send_meta_reply( string $channel, string $recipient_id, string $text ): void {
+		$http = new Http_Client();
+		try {
+			if ( $channel === 'facebook' ) {
+				$token = (string) $this->hub->credential_store()->get_plaintext( 'meta', 'page_access_token', 'live' );
+				if ( $token === '' ) return;
+				$http->request( 'POST', add_query_arg( 'access_token', $token, 'https://graph.facebook.com/v20.0/me/messages' ), array(
+					'headers' => array( 'Content-Type' => 'application/json' ),
+					'body' => wp_json_encode( array(
+						'recipient' => array( 'id' => $recipient_id ),
+						'message' => array( 'text' => mb_substr( $text, 0, 2000 ) ),
+						'messaging_type' => 'RESPONSE',
+					) ),
+					'timeout' => 20,
+					'retries' => 1,
+				) );
+			} elseif ( $channel === 'whatsapp' ) {
+				$token = (string) $this->hub->credential_store()->get_plaintext( 'meta', 'whatsapp_access_token', 'live' );
+				$phone_id = (string) $this->hub->credential_store()->get_plaintext( 'meta', 'whatsapp_phone_number_id', 'live' );
+				if ( $token === '' || $phone_id === '' ) return;
+				$http->request( 'POST', 'https://graph.facebook.com/v20.0/' . rawurlencode( $phone_id ) . '/messages', array(
+					'headers' => array( 'Content-Type' => 'application/json', 'Authorization' => 'Bearer ' . $token ),
+					'body' => wp_json_encode( array(
+						'messaging_product' => 'whatsapp',
+						'to' => $recipient_id,
+						'type' => 'text',
+						'text' => array( 'preview_url' => false, 'body' => mb_substr( $text, 0, 4096 ) ),
+					) ),
+					'timeout' => 20,
+					'retries' => 1,
+				) );
+			}
+		} catch ( \Throwable $e ) {
+			// best-effort; do not leak errors
+		}
+	}
