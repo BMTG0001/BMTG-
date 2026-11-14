@@ -44,10 +44,12 @@ class Chatbot_Admin {
 		$out['handover_message'] = sanitize_textarea_field( $input['handover_message'] ?? $defaults['handover_message'] );
 		$out['model_groq'] = sanitize_text_field( $input['model_groq'] ?? $defaults['model_groq'] );
 		$out['model_openrouter'] = sanitize_text_field( $input['model_openrouter'] ?? $defaults['model_openrouter'] );
-		$out['whatsapp_number'] = sanitize_text_field( $input['whatsapp_number'] ?? '' );
+		$out['whatsapp_number'] = preg_replace( '/\D+/', '', sanitize_text_field( $input['whatsapp_number'] ?? '' ) );
 		$out['whatsapp_prefill'] = sanitize_textarea_field( $input['whatsapp_prefill'] ?? $defaults['whatsapp_prefill'] );
 		$out['business_name'] = sanitize_text_field( $input['business_name'] ?? $defaults['business_name'] );
 		$out['business_address'] = sanitize_textarea_field( $input['business_address'] ?? '' );
+		$out['contact_email'] = sanitize_email( $input['contact_email'] ?? '' );
+		$out['contact_phone'] = sanitize_text_field( $input['contact_phone'] ?? '' );
 		$out['logo_url'] = esc_url_raw( $input['logo_url'] ?? '' );
 		$out['retention_days'] = max( 1, min( 3650, (int) ( $input['retention_days'] ?? $defaults['retention_days'] ) ) );
 		$excluded = array();
@@ -62,6 +64,7 @@ class Chatbot_Admin {
 			foreach ( $lines as $line ) { $line = trim( sanitize_text_field( (string) $line ) ); if ( $line !== '' ) $knowledge[] = $line; }
 		}
 		$out['knowledge'] = array_slice( $knowledge, 0, 200 );
+		delete_transient( 'bmtg_chatbot_site_context_v1' );
 		return $out;
 	}
 
@@ -87,6 +90,8 @@ class Chatbot_Admin {
 					<tr><th scope="row">WhatsApp Business number</th><td><input type="text" class="regular-text" name="<?php echo esc_attr(Chatbot::OPTION_KEY); ?>[whatsapp_number]" value="<?php echo esc_attr($s['whatsapp_number'] ?? ''); ?>" placeholder="e.g. 919876543210"><p class="description">International format, digits only. Enables "Continue on WhatsApp" (mobile/desktop) and [bmtg_whatsapp] shortcode.</p></td></tr>
 					<tr><th scope="row">WhatsApp prefilled message</th><td><textarea name="<?php echo esc_attr(Chatbot::OPTION_KEY); ?>[whatsapp_prefill]" rows="2" class="large-text"><?php echo esc_textarea($s['whatsapp_prefill'] ?? ''); ?></textarea></td></tr>
 					<tr><th scope="row">Business name</th><td><input type="text" class="regular-text" name="<?php echo esc_attr(Chatbot::OPTION_KEY); ?>[business_name]" value="<?php echo esc_attr($s['business_name'] ?? ''); ?>"></td></tr>
+					<tr><th scope="row">Contact email</th><td><input type="email" class="regular-text" name="<?php echo esc_attr(Chatbot::OPTION_KEY); ?>[contact_email]" value="<?php echo esc_attr($s['contact_email'] ?? ''); ?>"><p class="description">Shared with the chatbot so it can provide contact details to visitors.</p></td></tr>
+					<tr><th scope="row">Contact phone</th><td><input type="text" class="regular-text" name="<?php echo esc_attr(Chatbot::OPTION_KEY); ?>[contact_phone]" value="<?php echo esc_attr($s['contact_phone'] ?? ''); ?>"></td></tr>
 					<tr><th scope="row">Business address (for itineraries)</th><td><textarea name="<?php echo esc_attr(Chatbot::OPTION_KEY); ?>[business_address]" rows="3" class="large-text"><?php echo esc_textarea($s['business_address'] ?? ''); ?></textarea></td></tr>
 					<tr><th scope="row">Logo URL (for itineraries)</th><td><input type="url" class="regular-text" name="<?php echo esc_attr(Chatbot::OPTION_KEY); ?>[logo_url]" value="<?php echo esc_attr($s['logo_url'] ?? ''); ?>"></td></tr>
 					<tr><th scope="row">Groq model</th><td><input type="text" class="regular-text" name="<?php echo esc_attr(Chatbot::OPTION_KEY); ?>[model_groq]" value="<?php echo esc_attr($s['model_groq']); ?>"></td></tr>

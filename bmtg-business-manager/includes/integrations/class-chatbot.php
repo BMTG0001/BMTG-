@@ -56,6 +56,13 @@ class Chatbot {
 			'knowledge'            => array(),
 			'retention_days'       => 90,
 			'require_consent'      => true,
+			'whatsapp_number'      => '',
+			'whatsapp_prefill'     => 'Hello BM Travel Group, I would like assistance planning a journey.',
+			'business_name'        => 'BM Travel Group',
+			'business_address'     => '',
+			'logo_url'             => '',
+			'contact_email'        => '',
+			'contact_phone'        => '',
 		);
 	}
 
@@ -84,13 +91,21 @@ class Chatbot {
 		if ( ! $this->should_render() ) return;
 		wp_enqueue_style( 'bmtg-chatbot-widget' );
 		wp_enqueue_script( 'bmtg-chatbot-widget' );
+		$s = $this->settings();
+		$wa_num = preg_replace( '/\D+/', '', (string) ( $s['whatsapp_number'] ?? '' ) );
+		$wa_url = '';
+		if ( $wa_num !== '' ) {
+			$wa_url = 'https://wa.me/' . rawurlencode( $wa_num ) . '?text=' . rawurlencode( (string) ( $s['whatsapp_prefill'] ?? 'Hello BM Travel Group, I would like assistance planning a journey.' ) );
+		}
 		wp_localize_script( 'bmtg-chatbot-widget', 'BMTGChatbot', array(
 			'restUrl'          => esc_url_raw( rest_url( 'bmtg/v1/chatbot' ) ),
 			'nonce'            => wp_create_nonce( 'wp_rest' ),
-			'greeting'         => $this->settings()['greeting'],
-			'operatingHours'   => $this->settings()['operating_hours'],
-			'handoverMessage'  => $this->settings()['handover_message'],
-			'requireConsent'   => ! empty( $this->settings()['require_consent'] ),
+			'greeting'         => $s['greeting'],
+			'operatingHours'   => $s['operating_hours'],
+			'handoverMessage'  => $s['handover_message'],
+			'requireConsent'   => ! empty( $s['require_consent'] ),
+			'whatsappUrl'      => $wa_url,
+			'whatsappLabel'    => 'Continue on WhatsApp',
 		) );
 	}
 
@@ -208,8 +223,14 @@ class Chatbot {
 		}
 
 		$reply = $this->generate_reply( $messages, $post->ID );
+		$image = $this->maybe_attach_unsplash_image( $text, $messages );
+		if ( ! $image && $this->user_wants_image( $text ) ) {
+			$note = 'I am unable to display a photo right now. If you would like, I can share travel details or help plan a visit.';
+			if ( $reply === '' || stripos( $reply, 'unable to display' ) === false ) {
+				$reply = trim( $reply . "\n\n" . $note );
+			}
+		}
 		$messages[] = array( 'role' => 'assistant', 'content' => $reply, 'at' => gmdate( 'c' ) );
-		$image = $this->maybe_attach_unsplash_image( $text );
 		if ( $image ) {
 			$messages[] = array( 'role' => 'assistant', 'content' => '[image]', 'at' => gmdate( 'c' ), 'image' => $image );
 			$this->dispatch_inbox_event( $post->ID, 'inspiration_image', array( 'image' => $image, 'query' => $text ) );
@@ -219,11 +240,17 @@ class Chatbot {
 		return $this->private_response( array( 'reply' => $reply, 'status' => 'ai', 'image' => $image ) );
 	}
 
-	private function maybe_attach_unsplash_image( string $text ): ?array {
+	private function user_wants_image( string $text ): bool {
 		$t = mb_strtolower( $text );
-		$wants = preg_match('/\b(photo|picture|image|show|see|look|taj\s*mahal|monument|temple|palace|landmark)\b/u', $t);
-		if ( ! $wants ) return null;
+		return (bool) preg_match('/\b(photo|photos|picture|pictures|image|images|show|see|look)\b/u', $t);
+	}
+
+	private function maybe_attach_unsplash_image( string $text, array $messages = array() ): ?array {
+		if ( ! $this->user_wants_image( $text ) ) return null;
 		$query = $this->extract_image_query( $text );
+		if ( $query === '' ) {
+			$query = $this->extract_recent_image_query( $messages );
+		}
 		if ( $query === '' ) return null;
 		try {
 			$client = Manager::client( 'unsplash', 'live' );
@@ -248,11 +275,21 @@ class Chatbot {
 		return null;
 	}
 
+	private function extract_recent_image_query( array $messages ): string {
+		for ( $i = count( $messages ) - 1; $i >= 0; $i-- ) {
+			$m = $messages[$i];
+			if ( ( $m['role'] ?? '' ) !== 'user' ) continue;
+			$q = $this->extract_image_query( (string) ( $m['content'] ?? '' ) );
+			if ( $q !== '' ) return $q;
+		}
+		return '';
+	}
+
 	private function extract_image_query( string $text ): string {
 		$t = trim( $text );
 		if ( preg_match('/taj\s*mahal/i', $t) ) return 'Taj Mahal Agra';
 		// Simple heuristic: remove common words.
-		$clean = preg_replace('/\b(show|me|a|an|the|photo|picture|image|of|please|can|you|see|i|want|to)\b/i', ' ', $t);
+		$clean = preg_replace('/\b(show|me|a|an|the|photo|photos|picture|pictures|image|images|of|please|can|you|see|look|i|want|to|did|didnot|didn\'t|not)\b/i', ' ', $t);
 		$clean = trim(preg_replace('/\s+/', ' ', (string)$clean));
 		if ($clean === '' || mb_strlen($clean) < 3) return '';
 		return mb_substr($clean, 0, 80);
@@ -308,20 +345,78 @@ class Chatbot {
 		if ( ! empty( $s['knowledge'] ) && is_array( $s['knowledge'] ) ) {
 			$knowledge = "\nApproved knowledge:\n- " . implode("\n- ", array_map('strval', $s['knowledge']));
 		}
+		$site = $this->get_site_context( $s );
 		return "You are the BM Travel Group (BMTG) public website assistant for bmtravelgroup.com. Be warm, refined, concise, and helpful. " .
-			"Use only approved BMTG knowledge, destination information, services and published journeys. Help visitors discover journeys in India, Nepal, Bhutan and Sri Lanka. " .
+			"Use only approved BMTG knowledge, published website information provided below, destination information, services and published journeys. Help visitors discover journeys in India, Nepal, Bhutan and Sri Lanka. " .
+			"When visitors ask about the company, journeys, destinations, services, or how to get in touch, answer using the website/contact information below when relevant. " .
+			"If WhatsApp or other contact details are provided, you may share them clearly so the visitor can connect directly. " .
 			"Ask one question at a time and avoid repeating information. " .
 			"Never disclose public prices, supplier rates, invented availability, or unconfirmed arrangements. " .
 			"Capture contact/travel requirements only when the visitor requests assistance and explicitly consents. " .
 			"Do not expose private guest conversations, proposals, itineraries or documents. " .
 			"Refuse and do not answer requests that are sexual, violent, hateful, illegal, abusive, or otherwise inappropriate; respond with a brief safe refusal and offer travel assistance only. " .
 			"If information is unavailable, offer human handover. " .
-			"When a user asks to see a destination/place/photo (e.g. Taj Mahal), you may suggest a photo and the system may attach one approved image if available.\nOperating hours/fallback guidance: " . (string) $s['operating_hours'] . $knowledge;
+			"Never invent or include image URLs or markdown images. If the visitor asks to see a place/photo, describe it briefly; the system will attach an approved photo separately when available. If no photo can be shown, explain that and offer to assist with travel details.\nOperating hours/fallback guidance: " . (string) $s['operating_hours'] . $site . $knowledge;
+	}
+
+	private function get_site_context( array $s ): string {
+		$cached = get_transient( 'bmtg_chatbot_site_context_v1' );
+		if ( is_string( $cached ) && $cached !== '' ) {
+			return $this->append_contact_context( $cached, $s );
+		}
+		$lines = array();
+		$lines[] = 'Website: ' . get_bloginfo( 'name' ) . ' — ' . get_bloginfo( 'description' );
+		$lines[] = 'Site URL: ' . home_url( '/' );
+
+		$pages = get_posts( array(
+			'post_type' => array( 'page', 'post' ),
+			'post_status' => 'publish',
+			'numberposts' => 20,
+			'orderby' => 'modified',
+			'order' => 'DESC',
+		) );
+		foreach ( $pages as $p ) {
+			if ( ! $p instanceof \WP_Post ) continue;
+			$title = trim( wp_strip_all_tags( get_the_title( $p ) ) );
+			$url = get_permalink( $p );
+			$excerpt = trim( wp_strip_all_tags( has_excerpt( $p ) ? get_the_excerpt( $p ) : wp_trim_words( (string) $p->post_content, 24, '...' ) ) );
+			$excerpt = preg_replace( '/\s+/', ' ', $excerpt );
+			if ( $title === '' || ! $url ) continue;
+			$line = $title . ': ' . $url;
+			if ( $excerpt !== '' ) $line .= ' — ' . mb_substr( $excerpt, 0, 140 );
+			$lines[] = $line;
+		}
+
+		$context = "\nPublished website information:\n- " . implode( "\n- ", array_slice( $lines, 0, 22 ) );
+		$context = mb_substr( $context, 0, 3500 );
+		set_transient( 'bmtg_chatbot_site_context_v1', $context, HOUR_IN_SECONDS );
+		return $this->append_contact_context( $context, $s );
+	}
+
+	private function append_contact_context( string $context, array $s ): string {
+		$parts = array();
+		$biz = trim( (string) ( $s['business_name'] ?? '' ) );
+		$phone = trim( (string) ( $s['contact_phone'] ?? '' ) );
+		$email = trim( (string) ( $s['contact_email'] ?? '' ) );
+		$addr = trim( (string) ( $s['business_address'] ?? '' ) );
+		$wa = preg_replace( '/\D+/', '', (string) ( $s['whatsapp_number'] ?? '' ) );
+		if ( $biz !== '' ) $parts[] = 'Business: ' . $biz;
+		if ( $phone !== '' ) $parts[] = 'Phone: ' . $phone;
+		if ( $email !== '' ) $parts[] = 'Email: ' . $email;
+		if ( $addr !== '' ) $parts[] = 'Address: ' . preg_replace( '/\s+/', ' ', $addr );
+		if ( $wa !== '' ) $parts[] = 'WhatsApp: https://wa.me/' . rawurlencode( $wa );
+		if ( empty( $parts ) ) return $context;
+		return $context . "\nContact details:\n- " . implode( "\n- ", $parts );
 	}
 
 	private function apply_safety_filters( string $reply ): string {
 		// Remove likely price/rate disclosures (currency amounts) to enforce policy conservatively.
 		$reply = preg_replace('/(?:USD|EUR|GBP|INR|NPR|BTN|LKR|Rs\.?|₹|\$|€|£)\s?\d[\d,]*(?:\.\d+)?/i', '[pricing available on request]', $reply);
+		// Strip markdown/inline images and raw image URLs the model may invent; images are attached by the system only.
+		$reply = preg_replace('/!\[[^\]]*\]\([^)]+\)/', '', $reply);
+		$reply = preg_replace('/https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp)(?:\?\S*)?/i', '', $reply);
+		$reply = preg_replace('/https?:\/\/(?:upload\.wikimedia\.org|images\.unsplash\.com|unsplash\.com\/photos)\S*/i', '', $reply);
+		$reply = preg_replace('/\n{3,}/', "\n\n", (string) $reply);
 		return trim( $reply );
 	}
 
