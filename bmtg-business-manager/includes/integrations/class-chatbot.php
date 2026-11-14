@@ -47,10 +47,10 @@ class Chatbot {
 			'enabled'              => false,
 			'auto_inject'          => false,
 			'excluded_pages'       => array(),
-			'greeting'             => "Hi! 👋 Welcome to **BM Travel Group**.\n\nHow can I help with your journey in **India, Nepal, Bhutan, or Sri Lanka** today?",
+			'greeting'             => "Welcome to **BM Travel Group**.\n\nHow can I help you plan your journey in **India, Nepal, Bhutan, or Sri Lanka**?",
 			'operating_hours'      => '',
-			'fallback_message'     => "Sorry, I couldn’t get that just now. 🙏\n\nWould you like me to connect you with our team?",
-			'handover_message'     => "Sure thing! A member of our **BM Travel Group** team will assist you shortly.\n\nAnything else you’d like to share meanwhile?",
+			'fallback_message'     => "I’m unable to assist with that right now. I can connect you with our team if you would like.",
+			'handover_message'     => "A member of our **BM Travel Group** team will assist you shortly.",
 			'model_groq'           => 'llama-3.3-70b-versatile',
 			'model_openrouter'     => 'openai/gpt-4o-mini',
 			'knowledge'            => array(),
@@ -63,19 +63,26 @@ class Chatbot {
 			'logo_url'             => '',
 			'contact_email'        => '',
 			'contact_phone'        => '',
+			'quick_questions'      => array(
+				'What services do you offer?',
+				'Plan a journey to India, Nepal, Bhutan, or Sri Lanka',
+				'Tell me about your destinations',
+				'Help me create an itinerary',
+				'How can I contact your team?',
+			),
 			// Appearance / layout
 			'ui_header_bg'         => '#075e54',
 			'ui_header_accent'     => '#128c7e',
 			'ui_chat_bg'           => '#ece5dd',
 			'ui_incoming_bg'       => '#ffffff',
-			'ui_outgoing_bg'       => '#d9fdd3',
+			'ui_outgoing_bg'       => '#ffffff',
 			'ui_accent'            => '#25d366',
 			'ui_text_color'        => '#111b21',
 			'ui_muted_color'       => '#667781',
 			'ui_tick_color'        => '#53bdeb',
 			'ui_surface_bg'        => '#f0f2f5',
-			'ui_header_title'      => 'BM Travel Group',
-			'ui_header_tagline'    => 'Concierge · bmtravelgroup.com',
+			'ui_header_title'      => 'BM Travel Group Chat',
+			'ui_header_tagline'    => '',
 			'ui_launcher_label'    => 'Chat with us',
 			'ui_icon_url'          => '',
 			'ui_font_family'       => 'inherit',
@@ -126,21 +133,21 @@ class Chatbot {
 			$wa_url = 'https://wa.me/' . rawurlencode( $wa_num ) . '?text=' . rawurlencode( (string) ( $s['whatsapp_prefill'] ?? 'Hello BM Travel Group, I would like assistance planning a journey.' ) );
 		}
 		$ui = $this->ui_settings( $s );
-		$ui['headerTitle'] = 'BM Travel Group Chat';
-		$ui['headerTagline'] = '';
 		$inline = $this->ui_inline_css( $ui );
 		if ( $inline ) {
 			wp_add_inline_style( 'bmtg-chatbot-widget', $inline );
 		}
+		$quick = array_values( array_filter( array_map( 'strval', (array) ( $s['quick_questions'] ?? array() ) ) ) );
 		wp_localize_script( 'bmtg-chatbot-widget', 'BMTGChatbot', array(
 			'restUrl'          => esc_url_raw( rest_url( 'bmtg/v1/chatbot' ) ),
 			'nonce'            => wp_create_nonce( 'wp_rest' ),
 			'greeting'         => $s['greeting'],
-			'operatingHours'   => $s['operating_hours'],
+			'operatingHours'   => '',
 			'handoverMessage'  => $s['handover_message'],
 			'requireConsent'   => ! empty( $s['require_consent'] ),
 			'whatsappUrl'      => $wa_url,
 			'ui'               => $ui,
+			'quickQuestions'   => $quick,
 			'canvaItinerary'   => ! empty( $s['canva_itinerary_enabled'] ),
 		) );
 	}
@@ -174,7 +181,7 @@ class Chatbot {
 	}
 
 	private function ui_inline_css( array $ui ): string {
-		$font = $ui['fontFamily'] === 'inherit' ? 'inherit' : $ui['fontFamily'];
+		$font = ( $ui['fontFamily'] === 'inherit' || $ui['fontFamily'] === '' ) ? 'inherit' : $ui['fontFamily'];
 		$vars = array(
 			'--bmtg-header'         => $ui['headerBg'],
 			'--bmtg-header-accent'  => $ui['headerAccent'],
@@ -204,16 +211,20 @@ class Chatbot {
 		$css .= '.bmtg-chat-panel{font-family:var(--bmtg-font-family,inherit);font-size:var(--bmtg-font-size,14.5px);}';
 		$css .= '.bmtg-chat-launcher{font-family:var(--bmtg-font-family,inherit);}';
 		$css .= '.bmtg-chat-header .bmtg-title{font-size:var(--bmtg-headline-size,15px);}';
-		$css .= '.bmtg-chat-header .bmtg-sub{display:none !important;}';
+		if ( empty( $ui['headerTagline'] ) ) {
+			$css .= '.bmtg-chat-header .bmtg-sub{display:none !important;}';
+		} else {
+			$css .= '.bmtg-chat-header .bmtg-sub{font-size:var(--bmtg-tagline-size,12px);}';
+		}
 		$css .= '.bmtg-msg .bmtg-meta{font-size:var(--bmtg-timestamp-size,11px);}';
-		$css .= '.bmtg-icon-btn,.bmtg-lead-form .bmtg-submit,.bmtg-nudge-btn.primary{background:var(--bmtg-button-bg,#128c7e);color:var(--bmtg-button-text,#fff);font-size:var(--bmtg-button-font-size,13px);border-radius:var(--bmtg-button-radius,18px);}';
+		$css .= '.bmtg-icon-btn,.bmtg-lead-form .bmtg-submit,.bmtg-quick{background:var(--bmtg-button-bg,#128c7e);color:var(--bmtg-button-text,#fff);font-size:var(--bmtg-button-font-size,13px);}';
 		$css .= '.bmtg-icon-btn{border-radius:50%;}';
+		$css .= '.bmtg-lead-form .bmtg-submit,.bmtg-quick{border-radius:var(--bmtg-button-radius,18px);}';
 		$css .= '.bmtg-chat-header{background:var(--bmtg-header,#075e54);}';
 		$css .= '.bmtg-chat-messages{background-color:var(--bmtg-chat-bg,#ece5dd);}';
-		$css .= '.bmtg-msg.assistant{background:var(--bmtg-in,#fff);}';
-		$css .= '.bmtg-msg.user{background:var(--bmtg-out,#d9fdd3);}';
+		$css .= '.bmtg-msg.assistant,.bmtg-msg.user{background:var(--bmtg-in,#fff);color:var(--bmtg-text,#111b21);}';
 		$css .= '.bmtg-msg .bmtg-ticks{color:var(--bmtg-tick,#53bdeb);}';
-		$css .= '.bmtg-chat-actions,.bmtg-chat-input{background:var(--bmtg-surface,#f0f2f5);}';
+		$css .= '.bmtg-chat-input,.bmtg-quick-wrap{background:var(--bmtg-surface,#f0f2f5);}';
 		return $css;
 	}
 
@@ -554,18 +565,19 @@ class Chatbot {
 			$knowledge = "\nApproved knowledge:\n- " . implode("\n- ", array_map('strval', $s['knowledge']));
 		}
 		$site = $this->get_site_context( $s );
-		return "You are the official BM Travel Group (BMTG) concierge for bmtravelgroup.com only — a warm, professional travel consultant with strong sales, marketing, and customer-support judgement. Chat like a real human on WhatsApp on behalf of BM Travel Group. " .
-			"Sales & marketing brain (always helpful, never pushy): understand the traveller's intent and qualify gently (destination, dates/duration, travellers, interests/style) one question at a time; highlight BMTG's value (bespoke, curated journeys in India/Nepal/Bhutan/Sri Lanka) and inspire confidence with clear, relevant suggestions; guide the conversation toward a next step (share details for a tailored plan, connect on WhatsApp, or request an itinerary) only when appropriate. " .
+		return "You are the official BM Travel Group (BMTG) concierge for bmtravelgroup.com only — a warm, professional travel consultant with strong sales, marketing, and customer-support judgement. Chat like a real human on behalf of BM Travel Group. " .
+			"Read and use the published bmtravelgroup.com information provided below to understand BMTG's services, journeys, and destinations, guide visitors clearly, and explain how BMTG can help. " .
+			"Sales & marketing brain (helpful, never pushy): understand the traveller's intent and qualify gently (destination, dates/duration, travellers, interests/style) one question at a time; highlight BMTG's value (bespoke, curated journeys in India/Nepal/Bhutan/Sri Lanka) and inspire confidence with relevant suggestions; guide toward a next step (share details for a tailored plan, connect on WhatsApp, or request an itinerary/PDF) only when appropriate. " .
 			"Customer support brain: be patient, respectful, and solution-focused; acknowledge concerns, answer clearly, and if you cannot fulfil something, explain briefly and offer the best alternative or team handover. " .
 			"Control & guardrails (follow even when unsupervised): stay strictly within BMTG and bmtravelgroup.com scope — never promote/compare/mention other companies or competitors. Never disclose public prices, supplier rates, invented availability, or unconfirmed arrangements. Collect contact/travel requirements only when the visitor explicitly asks to share details and explicitly consents. Do not expose private guest conversations, proposals, itineraries or documents. Refuse sexual, violent, hateful, illegal, abusive, or inappropriate requests with a brief safe refusal and offer BMTG travel help only. Do not invent facts, links, or image URLs. " .
-			"Style: short and natural (1-3 short sentences when possible). Answer only what was asked. Ask at most one question at a time and only when needed. Avoid long lists/menus or unnecessary emojis unless the visitor asks. " .
+			"Style: short and natural (1-3 short sentences when possible). Answer only what was asked. Ask at most one question at a time and only when needed. Avoid long lists/menus or unnecessary emojis unless the visitor asks. Do not mention opening hours or times unless the visitor specifically asks. " .
 			"Capabilities: when asked, tell the visitor the WhatsApp/contact link is ready to connect (share it when provided). If they want to share details, tell them you can open the details form. You can help create an itinerary/PDF for download and, when enabled, a Canva itinerary design — only when the visitor explicitly requests it with enough context (destination and/or days). " .
 			"If information is unavailable, offer a simple handover to the team. " .
-			"Use only approved BMTG knowledge and published bmtravelgroup.com information provided below, plus destination information relevant to BM Travel Group journeys in India, Nepal, Bhutan and Sri Lanka.\nOperating hours/fallback guidance: " . (string) $s['operating_hours'] . $site . $knowledge;
+			"Use only approved BMTG knowledge and published bmtravelgroup.com information provided below, plus destination information relevant to BM Travel Group journeys in India, Nepal, Bhutan and Sri Lanka." . $site . $knowledge;
 	}
 
 	private function get_site_context( array $s ): string {
-		$cached = get_transient( 'bmtg_chatbot_site_context_v1' );
+		$cached = get_transient( 'bmtg_chatbot_site_context_v2' );
 		if ( is_string( $cached ) && $cached !== '' ) {
 			return $this->append_contact_context( $cached, $s );
 		}
@@ -579,26 +591,28 @@ class Chatbot {
 		$pages = get_posts( array(
 			'post_type' => array( 'page', 'post' ),
 			'post_status' => 'publish',
-			'numberposts' => 24,
-			'orderby' => 'modified',
-			'order' => 'DESC',
+			'numberposts' => 40,
+			'orderby' => 'menu_order',
+			'order' => 'ASC',
 		) );
 		foreach ( $pages as $p ) {
 			if ( ! $p instanceof \WP_Post ) continue;
 			$title = trim( wp_strip_all_tags( get_the_title( $p ) ) );
 			$url = get_permalink( $p );
-			if ( $host && strpos( (string) $url, $host ) === false ) continue; // bmtravelgroup.com/site domain only
-			$excerpt = trim( wp_strip_all_tags( has_excerpt( $p ) ? get_the_excerpt( $p ) : wp_trim_words( (string) $p->post_content, 28, '...' ) ) );
-			$excerpt = preg_replace( '/\s+/', ' ', $excerpt );
+			if ( $host && strpos( (string) $url, $host ) === false ) continue;
+			$content = trim( wp_strip_all_tags( (string) $p->post_content ) );
+			$content = preg_replace( '/\s+/', ' ', $content );
+			$snippet = has_excerpt( $p ) ? trim( wp_strip_all_tags( get_the_excerpt( $p ) ) ) : $content;
+			$snippet = preg_replace( '/\s+/', ' ', (string) $snippet );
 			if ( $title === '' || ! $url ) continue;
 			$line = $title . ': ' . $url;
-			if ( $excerpt !== '' ) $line .= ' — ' . mb_substr( $excerpt, 0, 160 );
+			if ( $snippet !== '' ) $line .= ' — ' . mb_substr( $snippet, 0, 320 );
 			$lines[] = $line;
 		}
 
-		$context = "\nPublished bmtravelgroup.com information (official company knowledge base; do not cite or promote other companies):\n- " . implode( "\n- ", array_slice( $lines, 0, 26 ) );
-		$context = mb_substr( $context, 0, 3800 );
-		set_transient( 'bmtg_chatbot_site_context_v1', $context, HOUR_IN_SECONDS );
+		$context = "\nPublished bmtravelgroup.com information (official company knowledge base; use this to guide visitors and explain BMTG services and journeys):\n- " . implode( "\n- ", array_slice( $lines, 0, 40 ) );
+		$context = mb_substr( $context, 0, 6000 );
+		set_transient( 'bmtg_chatbot_site_context_v2', $context, HOUR_IN_SECONDS );
 		return $this->append_contact_context( $context, $s );
 	}
 

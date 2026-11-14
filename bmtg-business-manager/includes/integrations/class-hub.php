@@ -75,17 +75,33 @@ class Hub {
 	}
 
 	public function register_admin_menu(): void {
-		add_options_page(
-			__( 'BMTG Integrations', 'bmtg-business-manager' ),
-			__( 'BMTG Integrations', 'bmtg-business-manager' ),
-			Activator::CAPABILITY,
-			'bmtg-integrations',
-			array( $this, 'render_admin_page' )
-		);
+		$cap = class_exists( '\\BMTG\\CRM\\Capabilities' ) ? \BMTG\CRM\Capabilities::VIEW_LEADS : Activator::CAPABILITY;
+		if ( ! current_user_can( $cap ) && ! current_user_can( Activator::CAPABILITY ) ) {
+			return;
+		}
+		// Consolidated under the BMTG CRM top-level menu when available.
+		if ( class_exists( '\\BMTG\\CRM\\Capabilities' ) ) {
+			add_submenu_page(
+				'bmtg-crm',
+				__( 'Integrations', 'bmtg-business-manager' ),
+				__( 'Integrations', 'bmtg-business-manager' ),
+				Activator::CAPABILITY,
+				'bmtg-integrations',
+				array( $this, 'render_admin_page' )
+			);
+		} else {
+			add_options_page(
+				__( 'BMTG Integrations', 'bmtg-business-manager' ),
+				__( 'BMTG Integrations', 'bmtg-business-manager' ),
+				Activator::CAPABILITY,
+				'bmtg-integrations',
+				array( $this, 'render_admin_page' )
+			);
+		}
 	}
 
 	public function enqueue_admin_assets( string $hook ): void {
-		if ( 'settings_page_bmtg-integrations' !== $hook ) {
+		if ( strpos( $hook, 'bmtg-integrations' ) === false ) {
 			return;
 		}
 		wp_enqueue_style( 'bmtg-integrations-admin', BMTG_PLUGIN_URL . 'admin/integrations/css/admin.css', array(), BMTG_VERSION );

@@ -12,13 +12,14 @@ class Admin {
 	}
 
 	public function menu(): void {
-		if ( ! Capabilities::can_view_leads() && ! Capabilities::can_view_customers() ) {
+		if ( ! Capabilities::can_view_leads() && ! Capabilities::can_view_customers() && ! current_user_can( \BMTG\Integrations\Activator::CAPABILITY ) ) {
 			return;
 		}
+		$cap = Capabilities::can_view_leads() ? Capabilities::VIEW_LEADS : Capabilities::VIEW_CUSTOMERS;
 		add_menu_page(
-			__( 'BMTG CRM', 'bmtg-business-manager' ),
-			__( 'BMTG CRM', 'bmtg-business-manager' ),
-			Capabilities::VIEW_LEADS,
+			__( 'BMTG', 'bmtg-business-manager' ),
+			__( 'BMTG', 'bmtg-business-manager' ),
+			$cap,
 			'bmtg-crm',
 			array( $this, 'render' ),
 			'dashicons-groups',
@@ -30,7 +31,7 @@ class Admin {
 	}
 
 	public function assets( string $hook ): void {
-		if ( strpos( $hook, 'bmtg-crm' ) === false ) {
+		if ( strpos( $hook, 'bmtg-crm' ) === false && strpos( $hook, 'bmtg-' ) === false ) {
 			return;
 		}
 		wp_enqueue_style( 'bmtg-crm-admin', BMTG_PLUGIN_URL . 'admin/crm/css/admin.css', array(), BMTG_VERSION );
@@ -53,6 +54,6 @@ class Admin {
 		if ( ! Capabilities::can_view_leads() && ! Capabilities::can_view_customers() ) {
 			wp_die( esc_html__( 'Permission denied.', 'bmtg-business-manager' ) );
 		}
-		echo '<div class="wrap"><h1>BMTG CRM</h1><div id="bmtg-crm-root" class="bmtg-crm-root"></div></div>';
+		echo '<div class="wrap"><h1>BMTG</h1><p>Manage leads, customers, reminders, chatbot, and integrations from one place.</p><div id="bmtg-crm-root" class="bmtg-crm-root"></div></div>';
 	}
 }

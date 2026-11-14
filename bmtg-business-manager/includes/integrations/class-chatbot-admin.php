@@ -18,13 +18,25 @@ class Chatbot_Admin {
 	}
 
 	public function menu(): void {
-		add_options_page(
-			__( 'BMTG Chatbot', 'bmtg-business-manager' ),
-			__( 'BMTG Chatbot', 'bmtg-business-manager' ),
-			Activator::CAPABILITY,
-			'bmtg-chatbot',
-			array( $this, 'render' )
-		);
+		// Consolidate under BMTG top-level menu when available.
+		if ( class_exists( '\\BMTG\\CRM\\Capabilities' ) ) {
+			add_submenu_page(
+				'bmtg-crm',
+				__( 'BMTG Chatbot', 'bmtg-business-manager' ),
+				__( 'Chatbot', 'bmtg-business-manager' ),
+				Activator::CAPABILITY,
+				'bmtg-chatbot',
+				array( $this, 'render' )
+			);
+		} else {
+			add_options_page(
+				__( 'BMTG Chatbot', 'bmtg-business-manager' ),
+				__( 'BMTG Chatbot', 'bmtg-business-manager' ),
+				Activator::CAPABILITY,
+				'bmtg-chatbot',
+				array( $this, 'render' )
+			);
+		}
 	}
 
 	public function register_settings(): void {
@@ -75,6 +87,12 @@ class Chatbot_Admin {
 			foreach ( $lines as $line ) { $line = trim( sanitize_text_field( (string) $line ) ); if ( $line !== '' ) $knowledge[] = $line; }
 		}
 		$out['knowledge'] = array_slice( $knowledge, 0, 200 );
+		$quick = array();
+		if ( ! empty( $input['quick_questions'] ) ) {
+			$qlines = is_array( $input['quick_questions'] ) ? $input['quick_questions'] : preg_split( "/\r\n|\n|\r/", (string) $input['quick_questions'] );
+			foreach ( $qlines as $line ) { $line = trim( sanitize_text_field( (string) $line ) ); if ( $line !== '' ) $quick[] = $line; }
+		}
+		$out['quick_questions'] = array_slice( $quick, 0, 10 );
 
 		// Appearance
 		$out['ui_header_bg'] = $this->sanitize_hex( $input['ui_header_bg'] ?? $defaults['ui_header_bg'], $defaults['ui_header_bg'] );
@@ -109,6 +127,7 @@ class Chatbot_Admin {
 		$out['canva_itinerary_design_type'] = $dt ?: 'doc';
 
 		delete_transient( 'bmtg_chatbot_site_context_v1' );
+		delete_transient( 'bmtg_chatbot_site_context_v2' );
 		return $out;
 	}
 
@@ -117,11 +136,12 @@ class Chatbot_Admin {
 		$s = $this->chatbot->settings();
 		$excluded = implode( ',', array_map( 'strval', (array) $s['excluded_pages'] ) );
 		$knowledge = implode( "\n", array_map( 'strval', (array) $s['knowledge'] ) );
+		$quick = implode( "\n", array_map( 'strval', (array) ( $s['quick_questions'] ?? array() ) ) );
 		$opt = Chatbot::OPTION_KEY;
 		?>
 		<div class="wrap">
 			<h1>BMTG Public Website Chatbot</h1>
-			<p>Floating, BMTG-branded chatbot for public pages. Uses Groq (primary) and OpenRouter (fallback) via <a href="<?php echo esc_url( admin_url('options-general.php?page=bmtg-integrations') ); ?>">Integrations Hub</a>. It answers on behalf of <strong>BM Travel Group (bmtravelgroup.com) only</strong> using published website/contact knowledge and does not promote other companies. Public context is isolated from Private Collection/guest data.</p>
+			<p>Floating, BMTG-branded chatbot for public pages. Uses Groq (primary) and OpenRouter (fallback) via <a href="<?php echo esc_url( admin_url('admin.php?page=bmtg-integrations') ); ?>">Integrations Hub</a>. It answers on behalf of <strong>BM Travel Group (bmtravelgroup.com) only</strong> using published website/contact knowledge and does not promote other companies. Public context is isolated from Private Collection/guest data.</p>
 			<p><strong>Meta webhooks (auto-answer):</strong> configure the <em>Meta (Facebook / WhatsApp)</em> connector in Integrations Hub, then set webhook callback URLs to <code><?php echo esc_html( rest_url('bmtg/v1/chatbot/webhook/facebook') ); ?></code> (Messenger) and <code><?php echo esc_html( rest_url('bmtg/v1/chatbot/webhook/whatsapp') ); ?></code> (WhatsApp Cloud) with the matching verify tokens.</p>
 			<form method="post" action="options.php">
 				<?php settings_fields( 'bmtg_chatbot_group' ); ?>
@@ -132,7 +152,8 @@ class Chatbot_Admin {
 					<tr><th scope="row">Auto inject</th><td><label><input type="checkbox" name="<?php echo esc_attr($opt); ?>[auto_inject]" value="1" <?php checked($s['auto_inject']); ?>> Automatically show widget on public pages (or use shortcode <code>[bmtg_chatbot]</code>)</label></td></tr>
 					<tr><th scope="row">Excluded page IDs</th><td><input type="text" class="regular-text" name="<?php echo esc_attr($opt); ?>[excluded_pages]" value="<?php echo esc_attr($excluded); ?>"><p class="description">Comma-separated page/post IDs.</p></td></tr>
 					<tr><th scope="row">Greeting</th><td><textarea name="<?php echo esc_attr($opt); ?>[greeting]" rows="3" class="large-text"><?php echo esc_textarea($s['greeting']); ?></textarea></td></tr>
-					<tr><th scope="row">Operating hours / guidance</th><td><textarea name="<?php echo esc_attr($opt); ?>[operating_hours]" rows="2" class="large-text"><?php echo esc_textarea($s['operating_hours']); ?></textarea></td></tr>
+					<tr><th scope="row">Predefined quick questions (one per line)</th><td><textarea name="<?php echo esc_attr($opt); ?>[quick_questions]" rows="5" class="large-text"><?php echo esc_textarea($quick); ?></textarea><p class="description">Shown at chat start for easy one-tap questions (e.g. services, destinations, plan a journey, contact).</p></td></tr>
+					<tr><th scope="row">Operating hours (optional, internal)</th><td><textarea name="<?php echo esc_attr($opt); ?>[operating_hours]" rows="2" class="large-text"><?php echo esc_textarea($s['operating_hours']); ?></textarea><p class="description">Not shown to visitors by default; kept for internal guidance.</p></td></tr>
 					<tr><th scope="row">Fallback message</th><td><textarea name="<?php echo esc_attr($opt); ?>[fallback_message]" rows="2" class="large-text"><?php echo esc_textarea($s['fallback_message']); ?></textarea></td></tr>
 					<tr><th scope="row">Handover message</th><td><textarea name="<?php echo esc_attr($opt); ?>[handover_message]" rows="2" class="large-text"><?php echo esc_textarea($s['handover_message']); ?></textarea></td></tr>
 					<tr><th scope="row">Require explicit consent for contact capture</th><td><label><input type="checkbox" name="<?php echo esc_attr($opt); ?>[require_consent]" value="1" <?php checked($s['require_consent']); ?>> Required</label></td></tr>

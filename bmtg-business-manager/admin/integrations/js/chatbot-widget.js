@@ -71,14 +71,17 @@
     const avatar=el('div','bmtg-avatar bmtg-avatar-lg');
     if(UI.iconUrl){ const im=document.createElement('img'); im.src=UI.iconUrl; im.alt='BM Travel Group'; im.style.width='100%'; im.style.height='100%'; im.style.borderRadius='50%'; im.style.objectFit='cover'; avatar.appendChild(im); }
     else { avatar.appendChild(svg(ICONS.user)); }
-    const htext=el('div','bmtg-htext'); htext.innerHTML='<div class="bmtg-title"></div>';
-    htext.querySelector('.bmtg-title').textContent = 'BM Travel Group Chat';
+    const htext=el('div','bmtg-htext'); htext.innerHTML='<div class="bmtg-title"></div>' + (UI.headerTagline ? '<div class="bmtg-sub"></div>' : '');
+    htext.querySelector('.bmtg-title').textContent = UI.headerTitle || 'BM Travel Group Chat';
+    if(UI.headerTagline){ htext.querySelector('.bmtg-sub').textContent = UI.headerTagline; }
     const closeBtn=el('button','bmtg-close'); closeBtn.type='button'; closeBtn.setAttribute('aria-label','Close chat'); closeBtn.appendChild(svg(ICONS.close));
     header.appendChild(avatar); header.appendChild(htext); header.appendChild(closeBtn);
 
     const msgs=el('div','bmtg-chat-messages'); msgs.setAttribute('aria-live','polite');
     const typing=el('div','bmtg-typing'); typing.style.display='none';
     const tb=el('div','bmtg-typing-bubble'); tb.appendChild(el('span','bmtg-dot')); tb.appendChild(el('span','bmtg-dot')); tb.appendChild(el('span','bmtg-dot')); typing.appendChild(tb);
+
+    const quickWrap=el('div','bmtg-quick-wrap'); quickWrap.style.display='none';
 
     const leadForm=el('div','bmtg-lead-form');
     leadForm.innerHTML='<p class="bmtg-form-title">Share your details</p>'+
@@ -94,14 +97,14 @@
     const send=el('button','bmtg-icon-btn'); send.type='button'; send.setAttribute('aria-label','Send'); send.appendChild(svg(ICONS.send));
     inputWrap.appendChild(ta); inputWrap.appendChild(send);
 
-    panel.appendChild(header); panel.appendChild(msgs); panel.appendChild(typing); panel.appendChild(leadForm); panel.appendChild(inputWrap);
+    panel.appendChild(header); panel.appendChild(msgs); panel.appendChild(typing); panel.appendChild(quickWrap); panel.appendChild(leadForm); panel.appendChild(inputWrap);
     document.body.appendChild(launcher); document.body.appendChild(panel);
     applyUiVars(launcher); applyUiVars(panel);
 
-    let session=null, busy=false;
+    let session=null, busy=false, started=false;
 
     function wantsLeadForm(text){
-      const t=String(text||'').toLower();
+      const t=String(text||'').toLowerCase();
       return /(\bshare\b.*\b(detail|info|contact|number|email|phone)\b|\bcontact\s*(me|you|team|form|details?)\b|\bmy\s*(details?|number|email|phone|contact)\b|\blead\s*form\b|\bcallback\b|\bcall\s*me\b|\breach\s*me\b|\bsend\s*(my\s*)?details\b|\bget\s*in\s*touch\b)/i.test(t);
     }
     function wantsWhatsapp(text){
@@ -109,6 +112,16 @@
       return /(\bwhatsapp\b|\bwa\b\b|\bchat\s*on\s*whatsapp\b|\bwhats\s*app\b|\blink\s*to\s*connect\b|\bconnect\s*on\s*whatsapp\b)/i.test(t);
     }
     function toggleLead(show){ leadForm.classList.toggle('open', !!show); if(show){ setTimeout(()=>leadForm.scrollIntoView({block:'nearest'}), 50); } }
+    function renderQuick(){
+      const qs = Array.isArray(BMTGChatbot.quickQuestions) ? BMTGChatbot.quickQuestions.filter(Boolean) : [];
+      if(!qs.length) return;
+      quickWrap.innerHTML=''; quickWrap.style.display='flex';
+      qs.slice(0,8).forEach(function(q){
+        const b=el('button','bmtg-quick', String(q)); b.type='button';
+        b.addEventListener('click', function(){ quickWrap.style.display='none'; ta.value=String(q); doSend(); });
+        quickWrap.appendChild(b);
+      });
+    }
 
     function addMsg(role,text,image,status){
       const m=el('div','bmtg-msg '+(role==='user'?'user':'assistant'));
@@ -147,7 +160,8 @@
       if(session) return session;
       const d=await api('/session',{});
       session={session_id:d.session_id,session_token:d.session_token};
-      addMsg('assistant', BMTGChatbot.greeting || 'Welcome to **BM Travel Group**. 👋\n\nHow can I assist with your journey in **India, Nepal, Bhutan, or Sri Lanka**?');
+      addMsg('assistant', BMTGChatbot.greeting || 'Welcome to **BM Travel Group**.\n\nHow can I help you plan your journey?');
+      if(!started){ started=true; renderQuick(); }
       return session;
     }
     function openPanel(){ panel.classList.add('open'); launcher.style.display='none'; ensureSession().then(()=>ta.focus()).catch(()=>addMsg('assistant','Unable to start chat right now. Please try again.')); }
@@ -156,6 +170,7 @@
 
     async function doSend(){
       const text=ta.value.trim(); if(!text || busy) return; ta.value=''; ta.style.height='auto';
+      if(quickWrap) quickWrap.style.display='none';
       const askLead = wantsLeadForm(text);
       const askWa = wantsWhatsapp(text);
       const userMsg=addMsg('user',text,null,'pending'); busy=true; typing.style.display='block'; msgs.scrollTop=msgs.scrollHeight;
