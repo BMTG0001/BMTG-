@@ -245,6 +245,9 @@ class Chatbot {
 		register_rest_route( $ns, '/handover', array(
 			'methods' => 'POST', 'callback' => array( $this, 'rest_handover' ), 'permission_callback' => '__return_true',
 		) );
+		register_rest_route( $ns, '/itinerary-pdf', array(
+			'methods' => 'POST', 'callback' => array( $this, 'rest_itinerary_pdf' ), 'permission_callback' => '__return_true',
+		) );
 		// Staff/admin inbox actions (separate auth).
 		register_rest_route( $ns, '/inbox/(?P<id>\d+)/reply', array(
 			'methods' => 'POST', 'callback' => array( $this, 'rest_staff_reply' ), 'permission_callback' => array( $this, 'can_staff' ),
@@ -355,6 +358,12 @@ class Chatbot {
 			}
 			$extra['canva'] = $canva;
 		}
+		$pdf_url = $this->maybe_create_itinerary_pdf( $text, $messages, $post->ID );
+		if ( $pdf_url ) {
+			if ( stripos( $reply, $pdf_url ) === false && stripos( $reply, 'Download itinerary' ) === false ) {
+				$reply = trim( $reply . "\n\n**Itinerary PDF (download/print):** " . $pdf_url );
+			}
+		}
 		$messages[] = array( 'role' => 'assistant', 'content' => $reply, 'at' => gmdate( 'c' ) );
 		if ( $image ) {
 			$messages[] = array( 'role' => 'assistant', 'content' => '[image]', 'at' => gmdate( 'c' ), 'image' => $image );
@@ -364,6 +373,7 @@ class Chatbot {
 		$this->dispatch_inbox_event( $post->ID, 'message', array( 'role' => 'assistant', 'content' => $reply ) );
 		$out = array( 'reply' => $reply, 'status' => 'ai', 'image' => $image );
 		if ( $canva ) $out['canva'] = $canva;
+		if ( $pdf_url ) $out['pdf_url'] = $pdf_url;
 		return $this->private_response( $out );
 	}
 
@@ -372,11 +382,10 @@ class Chatbot {
 		if ( empty( $s['canva_itinerary_enabled'] ) ) return null;
 		$text = trim( (string) $user_text );
 		$t = mb_strtolower( $text );
-		// Only when user explicitly asks to create/make/generate/design a Canva itinerary/plan.
-		$explicit = (bool) preg_match('/\b(canva|create|make|generate|design|draft|prepare|build)\b.{0,40}\b(itinerary|plan|day\s*by\s*day|trip\s*plan|travel\s*plan)\b|\b(itinerary|plan|day\s*by\s*day|trip\s*plan|travel\s*plan)\b.{0,40}\b(in|on|with)\s+canva\b/u', $t);
+		// Only when user explicitly asks to create/make/generate/design a Canva itinerary/plan/design.
+		$explicit = (bool) preg_match('/\b(canva|create|make|generate|design|draft|prepare|build)\b.{0,40}\b(itinerary|plan|day\s*by\s*day|trip\s*plan|travel\s*plan|design)\b|\b(itinerary|plan|day\s*by\s*day|trip\s*plan|travel\s*plan)\b.{0,40}\b(in|on|with)\s+canva\b/u', $t);
 		if ( ! $explicit ) return null;
 		if ( mb_strlen( $text ) < 10 ) return null;
-		// Require some destination/context so we don't create a blank/vague design.
 		$has_dest = (bool) preg_match('/\b(india|nepal|bhutan|sri lanka|taj|rajasthan|kerala|goa|himalaya|ladakh|kashmir|varanasi|delhi|jaipur|mumbai|kolkata|kathmandu|pokhara|colombo|kandy|galle|sigiriya|thimphu|paro|punakha)\b/i', $t);
 		$has_days = (bool) preg_match('/\b\d+\s*(day|days|night|nights)\b/i', $t);
 		if ( ! $has_dest && ! $has_days ) return null;
@@ -386,10 +395,57 @@ class Chatbot {
 				if ( preg_match('/\b(india|nepal|bhutan|sri lanka|taj|rajasthan|kerala|himalaya|kathmandu|colombo)\b/i', $text, $m) ) {
 					$title = 'BM Travel Group - ' . ucwords(strtolower($m[1])) . ' Journey';
 				}
-				return \BMTG\Integrations\Itinerary::create_canva_itinerary( $title, $text, $s['canva_itinerary_template_id'] ?? '' );
+				$result = \BMTG\Integrations\Itinerary::create_canva_itinerary( $title, $text, $s['canva_itinerary_template_id'] ?? '' );
+				// Keep response useful even on Canva API failure (best-effort: don't hide a helpful outcome).
+				if ( is_array($result) && empty($result['ok']) && empty($result['notice']) ) {
+					$result['notice'] = 'I can prepare the itinerary details here. The Canva design link is not available right now, but I can share an itinerary PDF if you would like.';
+				}
+				return $result;
 			}
-		} catch ( \Throwable $e ) { return array( 'ok' => false, 'notice' => 'I can prepare the itinerary details here, but the Canva design is not available right now.' ); }
+		} catch ( \Throwable $e ) { return array( 'ok' => false, 'notice' => 'I can prepare the itinerary details here. The Canva design link is not available right now, but I can share an itinerary PDF if you would like.' ); }
 		return null;
+	}
+
+	private function user_wants_pdf( string $text ): bool {
+		$t = mb_strtolower( $text );
+		return (bool) preg_match('/\b(pdf|download|print|printable|save.*itinerary|itinerary.*(pdf|download|print))\b/u', $t);
+	}
+
+	private function maybe_create_itinerary_pdf( string $user_text, array $messages, int $conversation_id ): ?string {
+		$t = mb_strtolower( (string) $user_text );
+		// Create when user explicitly asks for pdf/download/print of an itinerary/plan, or asks to create/generate an itinerary.
+		$wants_pdf = $this->user_wants_pdf( $user_text ) && preg_match('/\b(itinerary|plan|trip|journey|tour)\b/u', $t);
+		$wants_create_itinerary = (bool) preg_match('/\b(create|make|generate|draft|prepare|build|share|give|send)\b.{0,40}\b(itinerary|plan|day\s*by\s*day|trip\s*plan|travel\s*plan)\b|\b(itinerary|plan|day\s*by\s*day|trip\s*plan|travel\s*plan)\b/u', $t);
+		if ( ! $wants_pdf && ! $wants_create_itinerary ) return null;
+		if ( ! preg_match('/\b\d+\s*(day|days|night|nights)\b|\b(india|nepal|bhutan|sri lanka|taj|rajasthan|kerala|goa|himalaya|ladakh|kashmir|varanasi|delhi|jaipur|mumbai|kolkata|kathmandu|pokhara|colombo|kandy|galle|sigiriya|thimphu|paro|punakha)\b/i', $user_text) ) return null;
+		try {
+			if ( class_exists( '\\BMTG\\Integrations\\Itinerary' ) ) {
+				$pdf = \BMTG\Integrations\Itinerary::generate_chat_pdf( $user_text, $conversation_id );
+				if ( is_array($pdf) && ! empty($pdf['pdf_url']) ) return (string) $pdf['pdf_url'];
+			}
+		} catch ( \Throwable $e ) { return null; }
+		return null;
+	}
+
+	public function rest_itinerary_pdf( \WP_REST_Request $req ): \WP_REST_Response {
+		$post = $this->get_conversation( $req );
+		if ( ! $post ) return $this->private_response( array( 'error' => 'Invalid session.' ), 403 );
+		$ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+		if ( ! $this->rate_limit_ok( 'pdf_' . $ip . '_' . $post->ID, 6, 300 ) ) {
+			return $this->private_response( array( 'error' => 'Please wait before requesting another itinerary.' ), 429 );
+		}
+		$text = trim( wp_strip_all_tags( (string) $req->get_param( 'message' ) ) );
+		if ( $text === '' ) $text = 'BM Travel Group itinerary';
+		try {
+			if ( ! class_exists( '\\BMTG\\Integrations\\Itinerary' ) ) return $this->private_response( array( 'error' => 'Itinerary module unavailable.' ), 500 );
+			$pdf = \BMTG\Integrations\Itinerary::generate_chat_pdf( $text, $post->ID );
+			if ( is_array($pdf) && ! empty($pdf['pdf_url']) ) {
+				return $this->private_response( array( 'ok' => true, 'pdf_url' => $pdf['pdf_url'], 'title' => $pdf['title'] ?? '' ) );
+			}
+		} catch ( \Throwable $e ) {
+			return $this->private_response( array( 'error' => 'Unable to create itinerary right now.' ), 500 );
+		}
+		return $this->private_response( array( 'error' => 'Unable to create itinerary right now.' ), 500 );
 	}
 
 	private function user_wants_image( string $text ): bool {
@@ -498,18 +554,14 @@ class Chatbot {
 			$knowledge = "\nApproved knowledge:\n- " . implode("\n- ", array_map('strval', $s['knowledge']));
 		}
 		$site = $this->get_site_context( $s );
-		return "You are the official BM Travel Group (BMTG) concierge for bmtravelgroup.com only. Reply like a real human travel consultant in a WhatsApp chat, on behalf of BM Travel Group. " .
-			"Style: be warm, clear, and natural. Keep replies short (1-3 short sentences when possible). Answer only what the visitor asked. Ask at most one question at a time, and only when you need it to help them. Do not give long lists, menus, or multiple options unless the visitor asks for them. Avoid unnecessary emojis. " .
-			"You represent BM Travel Group exclusively. Never promote, recommend, compare, or provide information on behalf of any other company, competitor, travel agency, or third-party brand. If asked about another company, politely decline and offer BM Travel Group assistance instead. " .
-			"Use only approved BMTG knowledge and published bmtravelgroup.com information provided below, plus destination information relevant to BM Travel Group journeys in India, Nepal, Bhutan and Sri Lanka. " .
-			"When visitors ask about the company, journeys, destinations, services, or how to get in touch, answer using the bmtravelgroup.com/contact information below when relevant. " .
-			"If a visitor asks for WhatsApp or a way to connect, tell them the WhatsApp/contact link is ready to connect and share it clearly when provided below. If a visitor wants to share their details, tell them you can open the details form for them. " .
-			"Never disclose public prices, supplier rates, invented availability, or unconfirmed arrangements. " .
-			"Collect contact/travel requirements only when the visitor explicitly asks to share details and explicitly consents. " .
-			"Do not expose private guest conversations, proposals, itineraries or documents. " .
-			"Refuse and do not answer requests that are sexual, violent, hateful, illegal, abusive, or otherwise inappropriate; respond with a brief safe refusal and offer BM Travel Group travel assistance only. " .
+		return "You are the official BM Travel Group (BMTG) concierge for bmtravelgroup.com only — a warm, professional travel consultant with strong sales, marketing, and customer-support judgement. Chat like a real human on WhatsApp on behalf of BM Travel Group. " .
+			"Sales & marketing brain (always helpful, never pushy): understand the traveller's intent and qualify gently (destination, dates/duration, travellers, interests/style) one question at a time; highlight BMTG's value (bespoke, curated journeys in India/Nepal/Bhutan/Sri Lanka) and inspire confidence with clear, relevant suggestions; guide the conversation toward a next step (share details for a tailored plan, connect on WhatsApp, or request an itinerary) only when appropriate. " .
+			"Customer support brain: be patient, respectful, and solution-focused; acknowledge concerns, answer clearly, and if you cannot fulfil something, explain briefly and offer the best alternative or team handover. " .
+			"Control & guardrails (follow even when unsupervised): stay strictly within BMTG and bmtravelgroup.com scope — never promote/compare/mention other companies or competitors. Never disclose public prices, supplier rates, invented availability, or unconfirmed arrangements. Collect contact/travel requirements only when the visitor explicitly asks to share details and explicitly consents. Do not expose private guest conversations, proposals, itineraries or documents. Refuse sexual, violent, hateful, illegal, abusive, or inappropriate requests with a brief safe refusal and offer BMTG travel help only. Do not invent facts, links, or image URLs. " .
+			"Style: short and natural (1-3 short sentences when possible). Answer only what was asked. Ask at most one question at a time and only when needed. Avoid long lists/menus or unnecessary emojis unless the visitor asks. " .
+			"Capabilities: when asked, tell the visitor the WhatsApp/contact link is ready to connect (share it when provided). If they want to share details, tell them you can open the details form. You can help create an itinerary/PDF for download and, when enabled, a Canva itinerary design — only when the visitor explicitly requests it with enough context (destination and/or days). " .
 			"If information is unavailable, offer a simple handover to the team. " .
-			"Never invent or include image URLs or markdown images. If the visitor asks to see a place/photo, describe it briefly; the system may attach an approved photo separately when available.\nOperating hours/fallback guidance: " . (string) $s['operating_hours'] . $site . $knowledge;
+			"Use only approved BMTG knowledge and published bmtravelgroup.com information provided below, plus destination information relevant to BM Travel Group journeys in India, Nepal, Bhutan and Sri Lanka.\nOperating hours/fallback guidance: " . (string) $s['operating_hours'] . $site . $knowledge;
 	}
 
 	private function get_site_context( array $s ): string {

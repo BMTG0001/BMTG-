@@ -63,9 +63,8 @@
   function init(mount){
     if(!mount || mount.__bmtgInit) return; mount.__bmtgInit=true;
     const launcher=el('button','bmtg-chat-launcher'); launcher.type='button'; launcher.setAttribute('aria-label','Open chat');
-    if(UI.iconUrl){ const li=document.createElement('img'); li.src=UI.iconUrl; li.alt=''; li.style.width='28px'; li.style.height='28px'; li.style.borderRadius='50%'; li.style.objectFit='cover'; launcher.appendChild(li); }
+    if(UI.iconUrl){ const li=document.createElement('img'); li.src=UI.iconUrl; li.alt=''; li.style.width='30px'; li.style.height='30px'; li.style.borderRadius='50%'; li.style.objectFit='cover'; launcher.appendChild(li); }
     else { launcher.appendChild(svg(ICONS.chat)); }
-    launcher.appendChild(el('span','bmtg-launcher-label', UI.launcherLabel || 'Chat with us'));
 
     const panel=el('div','bmtg-chat-panel'); panel.setAttribute('role','dialog'); panel.setAttribute('aria-label', UI.headerTitle || 'BM Travel Group Chat');
     const header=el('div','bmtg-chat-header bmtg-chat-header-compact');
@@ -113,7 +112,25 @@
 
     function addMsg(role,text,image,status){
       const m=el('div','bmtg-msg '+(role==='user'?'user':'assistant'));
-      if(text){ const t=el('div','bmtg-body'); renderBody(t, text); m.appendChild(t); }
+      if(text){
+        const t=el('div','bmtg-body'); renderBody(t, text); m.appendChild(t);
+        // Make itinerary PDF/download links clearly clickable
+        try{
+          const re=/https?:\/\/[^\s<>"')]+/g; const walker=document.createTreeWalker(t, NodeFilter.SHOW_TEXT, null);
+          const nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode);
+          nodes.forEach(function(n){
+            const val=n.nodeValue||''; if(!re.test(val)) return; re.lastIndex=0; let i=0, m2, frag=document.createDocumentFragment();
+            while((m2=re.exec(val))){
+              if(m2.index>i) frag.appendChild(document.createTextNode(val.slice(i,m2.index)));
+              const a=document.createElement('a'); a.href=m2[0]; a.textContent=m2[0]; a.target='_blank'; a.rel='noopener noreferrer'; a.className='bmtg-link';
+              if(/bmtg_itinerary_pdf|\.pdf(\?|$)/i.test(m2[0])) a.textContent='Download itinerary (PDF)';
+              frag.appendChild(a); i=m2.index+m2[0].length;
+            }
+            if(i<val.length) frag.appendChild(document.createTextNode(val.slice(i)));
+            if(n.parentNode) n.parentNode.replaceChild(frag,n);
+          });
+        }catch(e){}
+      }
       if(image && image.url){ const im=document.createElement('img'); im.src=image.url; im.alt=image.alt||'Travel inspiration'; im.loading='lazy'; m.appendChild(im);
         if(image.credit){ const c=el('div','bmtg-caption', image.credit); m.appendChild(c); } }
       const meta=el('span','bmtg-meta'); meta.appendChild(document.createTextNode(nowTime()));
@@ -150,6 +167,7 @@
         const replyText = d.reply || '';
         if(replyText || d.image) addMsg('assistant', replyText, d.image||null);
         if(d.notice) addMsg('assistant', d.notice);
+        if(d.pdf_url){ addMsg('assistant', 'Your itinerary is ready: ' + d.pdf_url); }
         if(d.canva && d.canva.url && !/canva/i.test(replyText)){ addMsg('assistant', '**Canva itinerary design:** '+d.canva.url); }
         if(askWa && BMTGChatbot.whatsappUrl && !/https?:\/\/wa\.me/i.test(replyText)){
           addMsg('assistant', 'WhatsApp link ready to connect: ' + BMTGChatbot.whatsappUrl);
