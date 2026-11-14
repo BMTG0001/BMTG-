@@ -12,6 +12,12 @@ class Activator {
 		self::add_capability();
 		$migrations = new Migrations();
 		$migrations->migrate();
+		if ( class_exists( '\\BMTG\\CRM\\Capabilities' ) ) {
+			\BMTG\CRM\Capabilities::add_caps();
+		}
+		if ( class_exists( '\\BMTG\\CRM\\Migrations' ) ) {
+			( new \BMTG\CRM\Migrations() )->migrate();
+		}
 		if ( ! wp_next_scheduled( Health::CRON_HOOK ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', Health::CRON_HOOK );
 		}

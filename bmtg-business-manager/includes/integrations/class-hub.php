@@ -48,6 +48,11 @@ class Hub {
 		$this->health->register_hooks();
 		$this->key_rotation->register_hooks();
 
+		// CRM foundation (Phase 2).
+		if ( class_exists( '\\BMTG\\CRM\\Module' ) ) {
+			\BMTG\CRM\Module::boot();
+		}
+
 		// Public website chatbot (does not replace existing bmtg-chat plugin; integrates via hooks).
 		if ( ! defined( 'BMTG_CHATBOT_DISABLE' ) ) {
 			$chatbot = new Chatbot( $this );

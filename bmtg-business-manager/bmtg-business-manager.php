@@ -18,6 +18,7 @@ define( 'BMTG_PLUGIN_FILE', __FILE__ );
 define( 'BMTG_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BMTG_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'BMTG_INTEGRATIONS_DB_VERSION', '1' );
+define( 'BMTG_CRM_DB_VERSION', '1' );
 
 require_once BMTG_PLUGIN_DIR . 'includes/integrations/class-autoloader.php';
 BMTG\Integrations\Autoloader::register();
