@@ -40,3 +40,7 @@
 .bmtg-icon-btn svg{width:20px;height:20px;fill:#fff}
 .bmtg-icon-btn:disabled{opacity:.6;cursor:default}
 @media (max-width:480px){.bmtg-chat-panel{right:8px;left:8px;bottom:86px;width:auto;height:72vh}.bmtg-chat-launcher .bmtg-launcher-label{display:none}}
+.bmtg-msg .bmtg-body p{margin:0 0 6px}
+.bmtg-msg .bmtg-body p:last-child{margin-bottom:0}
+.bmtg-msg .bmtg-body ul.bmtg-ul{margin:4px 0 6px 18px;padding:0}
+.bmtg-msg .bmtg-body li{margin:2px 0}
