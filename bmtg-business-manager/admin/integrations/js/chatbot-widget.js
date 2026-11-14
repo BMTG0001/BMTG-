@@ -15,7 +15,6 @@
     let ul=null;
     function flush(){ul=null;}
     function inline(str){
-      // simple **bold** support
       const re=/\*\*(.+?)\*\*/g; let i=0,m,frag=document.createDocumentFragment();
       while((m=re.exec(str))){
         if(m.index>i) frag.appendChild(document.createTextNode(str.slice(i,m.index)));
@@ -40,19 +39,33 @@
     if(!mount || mount.__bmtgInit) return; mount.__bmtgInit=true;
     const launcher=el('button','bmtg-chat-launcher'); launcher.type='button'; launcher.setAttribute('aria-label','Open chat');
     launcher.appendChild(svg(ICONS.chat));
-    const llabel=el('span','bmtg-launcher-label','Chat with us'); launcher.appendChild(llabel);
+    const llabel=el('span','bmtg-launcher-label','Chat with MOB'); launcher.appendChild(llabel);
 
     const panel=el('div','bmtg-chat-panel'); panel.setAttribute('role','dialog'); panel.setAttribute('aria-label','BM Travel Group concierge');
     const header=el('div','bmtg-chat-header');
     const avatar=el('div','bmtg-avatar'); avatar.appendChild(svg(ICONS.user));
-    const htext=el('div','bmtg-htext'); htext.innerHTML='<div class="bmtg-title">BM Travel Group</div><div class="bmtg-sub">online · bmtravelgroup.com</div>';
+    const htext=el('div','bmtg-htext'); htext.innerHTML='<div class="bmtg-title">MOB · Travel Concierge</div><div class="bmtg-sub">BM Travel Group</div>';
     const closeBtn=el('button','bmtg-close','×'); closeBtn.type='button'; closeBtn.setAttribute('aria-label','Close chat');
     header.appendChild(avatar); header.appendChild(htext); header.appendChild(closeBtn);
 
     const msgs=el('div','bmtg-chat-messages'); msgs.setAttribute('aria-live','polite');
-    const typing=el('div','bmtg-typing','');
+
+    const quickReplies=el('div','bmtg-quick-replies');
+    ['✨ Golden Triangle Tour', '🏔️ Bhutan Luxury Trek', '🐘 Sri Lanka Safari', '📅 Plan Custom Journey'].forEach(text=>{
+      const chip=el('button','bmtg-quick-chip', text); chip.type='button';
+      chip.addEventListener('click', ()=>{ ta.value = text.replace(/^[^\w\s]+/, '').trim(); doSend(); });
+      quickReplies.appendChild(chip);
+    });
+
+    const typingContainer=el('div','bmtg-typing-container'); typingContainer.style.display='none';
+    const typingIndicator=el('div','bmtg-typing-indicator');
+    typingIndicator.appendChild(el('div','bmtg-typing-dot'));
+    typingIndicator.appendChild(el('div','bmtg-typing-dot'));
+    typingIndicator.appendChild(el('div','bmtg-typing-dot'));
+    typingContainer.appendChild(typingIndicator);
+
     const actions=el('div','bmtg-chat-actions');
-    const humanBtn=el('button',null,'Request assistance'); humanBtn.type='button';
+    const humanBtn=el('button',null,'Request team'); humanBtn.type='button';
     const leadBtn=el('button',null,'Share details'); leadBtn.type='button';
     actions.appendChild(humanBtn); actions.appendChild(leadBtn);
     if(BMTGChatbot.whatsappUrl){ const wa=document.createElement('a'); wa.className='bmtg-wa'; wa.href=BMTGChatbot.whatsappUrl; wa.target='_blank'; wa.rel='noopener'; wa.appendChild(svg(ICONS.wa)); wa.appendChild(document.createTextNode(' WhatsApp')); actions.appendChild(wa); }
@@ -62,14 +75,15 @@
       '<label>Email</label><input type="email" id="bmtg-lead-email" placeholder="Email" aria-label="Email">'+
       '<label>Phone</label><input type="text" id="bmtg-lead-phone" placeholder="Phone" aria-label="Phone">'+
       '<label>Travel requirements</label><textarea id="bmtg-lead-req" placeholder="Destinations, dates, interests" aria-label="Travel requirements"></textarea>'+
-      '<label class="bmtg-consent-row"><input type="checkbox" id="bmtg-consent-cb"> <span>I explicitly consent to share my contact and travel requirements so BM Travel Group can assist me.</span></label>'+
+      '<label class="bmtg-consent-row"><input type="checkbox" id="bmtg-consent-cb"> <span>I explicitly consent to share my contact details with BM Travel Group.</span></label>'+
       '<button type="button" id="bmtg-lead-submit">Submit details</button>';
-    const consent=el('div','bmtg-consent', BMTGChatbot.requireConsent ? 'Contact details are shared only with your explicit consent.' : 'Chatting with BM Travel Group (bmtravelgroup.com).');
+
     const inputWrap=el('div','bmtg-chat-input');
-    const ta=document.createElement('textarea'); ta.rows=1; ta.placeholder='Type a message'; ta.setAttribute('aria-label','Message');
+    const ta=document.createElement('textarea'); ta.rows=1; ta.placeholder='Type a message to MOB...'; ta.setAttribute('aria-label','Message');
     const send=el('button','bmtg-icon-btn'); send.type='button'; send.setAttribute('aria-label','Send'); send.appendChild(svg(ICONS.send));
     inputWrap.appendChild(ta); inputWrap.appendChild(send);
-    panel.appendChild(header); panel.appendChild(msgs); panel.appendChild(typing); panel.appendChild(actions); panel.appendChild(leadForm); panel.appendChild(consent); panel.appendChild(inputWrap);
+
+    panel.appendChild(header); panel.appendChild(msgs); panel.appendChild(quickReplies); panel.appendChild(typingContainer); panel.appendChild(actions); panel.appendChild(leadForm); panel.appendChild(inputWrap);
     document.body.appendChild(launcher); document.body.appendChild(panel);
 
     let session=null, busy=false;
@@ -92,25 +106,36 @@
       if(session) return session;
       const d=await api('/session',{});
       session={session_id:d.session_id,session_token:d.session_token};
-      addMsg('assistant', BMTGChatbot.greeting || 'Hi! 👋 Welcome to **BM Travel Group**.\n\nHow can I help with your journey in **India, Nepal, Bhutan, or Sri Lanka** today?');
+      addMsg('assistant', BMTGChatbot.greeting || 'Namaste! 👋 I am **MOB**, your luxury travel concierge at **BM Travel Group**.\n\nHow may I curate your private journey across **India, Nepal, Bhutan, or Sri Lanka** today?');
       return session;
     }
-    function openPanel(){ panel.classList.add('open'); launcher.style.display='none'; ensureSession().then(()=>ta.focus()).catch(()=>addMsg('assistant','Sorry, I couldn’t start the chat right now. 🙏\n\nWould you like to try again?')); }
+    function openPanel(){ panel.classList.add('open'); launcher.style.display='none'; ensureSession().then(()=>ta.focus()).catch(()=>addMsg('assistant','Unable to initialize chat right now. 🙏')); }
     function closePanel(){ panel.classList.remove('open'); launcher.style.display='flex'; }
     launcher.addEventListener('click', openPanel);
     closeBtn.addEventListener('click', closePanel);
 
     async function doSend(){
       const text=ta.value.trim(); if(!text || busy) return; ta.value=''; ta.style.height='auto';
-      const userMsg=addMsg('user',text,null,'pending'); busy=true; typing.textContent='typing…';
-      try{ await ensureSession(); const d=await api('/message',{message:text}); markDelivered(userMsg); typing.textContent=''; if(d.reply || d.image) addMsg('assistant', d.reply||'', d.image||null); if(d.notice) addMsg('assistant', d.notice); }
-      catch(e){ markDelivered(userMsg); typing.textContent=''; addMsg('assistant', e.message || 'Sorry, something went wrong. Please try again.'); }
+      const userMsg=addMsg('user',text,null,'pending'); busy=true; typingContainer.style.display='block'; msgs.scrollTop=msgs.scrollHeight;
+      try{
+        await ensureSession();
+        const d=await api('/message',{message:text});
+        markDelivered(userMsg);
+        typingContainer.style.display='none';
+        if(d.reply || d.image) addMsg('assistant', d.reply||'', d.image||null);
+        if(d.notice) addMsg('assistant', d.notice);
+      }
+      catch(e){
+        markDelivered(userMsg);
+        typingContainer.style.display='none';
+        addMsg('assistant', e.message || 'Sorry, I encountered a connection issue. Please try again.');
+      }
       finally{ busy=false; msgs.scrollTop=msgs.scrollHeight; }
     }
     send.addEventListener('click', doSend);
-    ta.addEventListener('input', ()=>{ ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,110)+'px'; });
+    ta.addEventListener('input', ()=>{ ta.style.height='auto'; ta.style.height=Math.min(ta.scrollHeight,100)+'px'; });
     ta.addEventListener('keydown',(e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); doSend(); }});
-    humanBtn.addEventListener('click', async ()=>{ try{ await ensureSession(); const d=await api('/handover',{}); addMsg('assistant', d.message || BMTGChatbot.handoverMessage || 'A member of our team will assist you shortly.'); }catch(e){ addMsg('assistant','Unable to request assistance right now. Please try again.'); } });
+    humanBtn.addEventListener('click', async ()=>{ try{ await ensureSession(); const d=await api('/handover',{}); addMsg('assistant', d.message || 'Mr. Deepak or our concierge team has been notified and will connect with you shortly.'); }catch(e){ addMsg('assistant','Unable to request assistance right now.'); } });
     leadBtn.addEventListener('click', ()=>{ leadForm.style.display = leadForm.style.display==='none' ? 'block' : 'none'; if(leadForm.style.display==='block') leadForm.scrollIntoView({block:'nearest'}); });
     leadForm.querySelector('#bmtg-lead-submit').addEventListener('click', async ()=>{
       try {
@@ -118,9 +143,9 @@
         const consent = !!leadForm.querySelector('#bmtg-consent-cb').checked;
         const payload = { consent: consent, name: leadForm.querySelector('#bmtg-lead-name').value || '', email: leadForm.querySelector('#bmtg-lead-email').value || '', phone: leadForm.querySelector('#bmtg-lead-phone').value || '', requirements: leadForm.querySelector('#bmtg-lead-req').value || '' };
         await api('/lead', payload);
-        addMsg('assistant','Thanks! 🙏 Your details are with **BM Travel Group** — we’ll be in touch soon.\n\nAnything else I can help you plan?');
+        addMsg('assistant','Thank you! 🙏 Your travel brief has been registered with BM Travel Group.');
         leadForm.style.display='none';
-      } catch(e){ addMsg('assistant', e.message || 'Unable to submit details. Please try again.'); }
+      } catch(e){ addMsg('assistant', e.message || 'Unable to submit details.'); }
     });
   }
   document.addEventListener('DOMContentLoaded', function(){ document.querySelectorAll('[data-bmtg-chatbot]').forEach(init); });

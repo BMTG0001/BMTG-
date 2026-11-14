@@ -1,46 +1,299 @@
-:root{--bmtg-wa-header:#075e54;--bmtg-wa-header2:#128c7e;--bmtg-wa-bg:#efeae2;--bmtg-wa-bg-pattern:rgba(0,0,0,.03);--bmtg-wa-in:#ffffff;--bmtg-wa-out:#d9fdd3;--bmtg-wa-text:#111b21;--bmtg-wa-muted:#667781;--bmtg-wa-border:#e9edef;--bmtg-wa-accent:#25d366;--bmtg-shadow:0 8px 28px rgba(11,20,26,.18)}
-.bmtg-chat-launcher{position:fixed;right:20px;bottom:20px;z-index:99999;width:58px;height:58px;border-radius:50%;border:none;background:var(--bmtg-wa-accent);color:#fff;cursor:pointer;box-shadow:var(--bmtg-shadow);display:flex;align-items:center;justify-content:center;padding:0}
-.bmtg-chat-launcher svg{width:28px;height:28px;fill:#fff;display:block}
-.bmtg-chat-launcher .bmtg-launcher-label{position:absolute;right:68px;white-space:nowrap;background:#fff;color:var(--bmtg-wa-text);padding:8px 12px;border-radius:18px;box-shadow:0 4px 14px rgba(0,0,0,.12);font:500 13px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-.bmtg-chat-panel{position:fixed;right:20px;bottom:90px;width:370px;max-width:calc(100vw - 24px);height:560px;max-height:calc(100vh - 120px);background:var(--bmtg-wa-bg);color:var(--bmtg-wa-text);border-radius:16px;box-shadow:var(--bmtg-shadow);display:none;flex-direction:column;overflow:hidden;z-index:99999;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-.bmtg-chat-panel.open{display:flex}
-.bmtg-chat-header{background:linear-gradient(135deg,var(--bmtg-wa-header),var(--bmtg-wa-header2));color:#fff;padding:12px 14px;display:flex;align-items:center;gap:10px}
-.bmtg-chat-header .bmtg-avatar{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex:0 0 38px}
-.bmtg-chat-header .bmtg-avatar svg{width:22px;height:22px;fill:#fff}
-.bmtg-chat-header .bmtg-htext{min-width:0}
-.bmtg-chat-header .bmtg-title{font:600 15px/1.2 inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bmtg-chat-header .bmtg-sub{font-size:12px;opacity:.92;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bmtg-chat-header .bmtg-close{margin-left:auto;background:transparent;border:none;color:#fff;font-size:22px;line-height:1;cursor:pointer;padding:4px 6px;border-radius:8px}
-.bmtg-chat-messages{flex:1;overflow:auto;padding:12px 10px;background-color:var(--bmtg-wa-bg);background-image:radial-gradient(var(--bmtg-wa-bg-pattern) 1px,transparent 1px);background-size:18px 18px}
-.bmtg-msg{margin:4px 0;padding:7px 9px 5px;border-radius:10px;max-width:82%;position:relative;word-wrap:break-word;box-shadow:0 1px .5px rgba(11,20,26,.13);font-size:14.2px}
-.bmtg-msg.assistant{background:var(--bmtg-wa-in);color:var(--bmtg-wa-text);border-top-left-radius:0;margin-right:auto}
-.bmtg-msg.user{background:var(--bmtg-wa-out);color:var(--bmtg-wa-text);margin-left:auto;border-top-right-radius:0}
-.bmtg-msg .bmtg-body{white-space:pre-wrap}
-.bmtg-msg .bmtg-meta{display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:11px;color:var(--bmtg-wa-muted);margin-top:2px;line-height:1}
-.bmtg-msg .bmtg-ticks{color:#53bdeb;font-size:13px;letter-spacing:-2px;margin-left:2px}
-.bmtg-msg .bmtg-ticks.pending{color:var(--bmtg-wa-muted)}
-.bmtg-msg img{max-width:100%;border-radius:8px;margin-top:6px;display:block}
+:root {
+  --bmtg-wa-header: #075e54;
+  --bmtg-wa-header2: #128c7e;
+  --bmtg-wa-bg: #efeae2;
+  --bmtg-wa-bg-pattern: rgba(0, 0, 0, 0.03);
+  --bmtg-wa-in: #ffffff;
+  --bmtg-wa-out: #d9fdd3;
+  --bmtg-wa-text: #111b21;
+  --bmtg-wa-muted: #667781;
+  --bmtg-wa-border: #e9edef;
+  --bmtg-wa-accent: #25d366;
+  --bmtg-shadow: 0 12px 36px rgba(11, 20, 26, 0.2);
+}
+
+.bmtg-chat-launcher {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 99999;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bmtg-wa-accent);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: var(--bmtg-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  font-family: inherit;
+}
+.bmtg-chat-launcher:hover { transform: scale(1.08); }
+.bmtg-chat-launcher svg { width: 30px; height: 30px; fill: #fff; display: block; }
+.bmtg-chat-launcher .bmtg-launcher-label {
+  position: absolute;
+  right: 72px;
+  white-space: nowrap;
+  background: #fff;
+  color: var(--bmtg-wa-text);
+  padding: 8px 14px;
+  border-radius: 20px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  pointer-events: none;
+}
+
+.bmtg-chat-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 96px;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  height: min(600px, calc(100vh - 120px));
+  max-height: calc(100vh - 120px);
+  background: var(--bmtg-wa-bg);
+  color: var(--bmtg-wa-text);
+  border-radius: 18px;
+  box-shadow: var(--bmtg-shadow);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 99999;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+  transform-origin: bottom right;
+  transition: all 0.25s ease-in-out;
+}
+.bmtg-chat-panel.open { display: flex; animation: bmtgScaleIn 0.25s ease forwards; }
+
+@keyframes bmtgScaleIn {
+  from { opacity: 0; transform: scale(0.92) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.bmtg-chat-header {
+  background: linear-gradient(135deg, var(--bmtg-wa-header), var(--bmtg-wa-header2));
+  color: #fff;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+.bmtg-chat-header .bmtg-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 40px;
+}
+.bmtg-chat-header .bmtg-avatar svg { width: 22px; height: 22px; fill: #fff; }
+.bmtg-chat-header .bmtg-htext { min-width: 0; flex: 1; }
+.bmtg-chat-header .bmtg-title { font-weight: 600; font-size: 15px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bmtg-chat-header .bmtg-sub { font-size: 11.5px; opacity: 0.92; margin-top: 3px; display: flex; align-items: center; gap: 5px; }
+.bmtg-chat-header .bmtg-sub::before { content: ''; width: 7px; height: 7px; background: #25d366; border-radius: 50%; display: inline-block; }
+.bmtg-chat-header .bmtg-close { background: transparent; border: none; color: #fff; font-size: 24px; line-height: 1; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: background 0.2s; }
+.bmtg-chat-header .bmtg-close:hover { background: rgba(255,255,255,0.15); }
+
+.bmtg-chat-messages {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 12px;
+  background-color: var(--bmtg-wa-bg);
+  background-image: radial-gradient(var(--bmtg-wa-bg-pattern) 1.2px, transparent 1.2px);
+  background-size: 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bmtg-msg {
+  margin: 2px 0;
+  padding: 8px 11px 6px;
+  border-radius: 12px;
+  max-width: 84%;
+  position: relative;
+  word-wrap: break-word;
+  box-shadow: 0 1px 1px rgba(11, 20, 26, 0.08);
+  font-size: 14px;
+}
+.bmtg-msg.assistant { background: var(--bmtg-wa-in); color: var(--bmtg-wa-text); border-top-left-radius: 2px; margin-right: auto; }
+.bmtg-msg.user { background: var(--bmtg-wa-out); color: var(--bmtg-wa-text); margin-left: auto; border-top-right-radius: 2px; }
+.bmtg-msg .bmtg-body { white-space: pre-wrap; word-break: break-word; }
+.bmtg-msg .bmtg-meta { display: flex; align-items: center; justify-content: flex-end; gap: 4px; font-size: 10.5px; color: var(--bmtg-wa-muted); margin-top: 3px; line-height: 1; }
+.bmtg-msg .bmtg-ticks { color: #53bdeb; font-size: 12px; letter-spacing: -2px; margin-left: 2px; }
+.bmtg-msg .bmtg-ticks.pending { color: var(--bmtg-wa-muted); }
+.bmtg-msg img { max-width: 100%; border-radius: 8px; margin-top: 6px; display: block; }
 .bmtg-msg .bmtg-caption{font-size:11px;color:var(--bmtg-wa-muted);margin-top:4px}
-.bmtg-typing{font-size:12px;color:var(--bmtg-wa-muted);padding:2px 14px 6px;min-height:18px}
-.bmtg-chat-actions{padding:8px 10px;border-top:1px solid var(--bmtg-wa-border);display:flex;gap:8px;flex-wrap:wrap;background:#f0f2f5}
-.bmtg-chat-actions button,.bmtg-chat-actions a{background:#fff;border:1px solid #d1d7db;color:var(--bmtg-wa-text);border-radius:18px;padding:6px 10px;font-size:12px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
-.bmtg-chat-actions .bmtg-wa{background:var(--bmtg-wa-accent);color:#fff;border-color:var(--bmtg-wa-accent)}
+
+.bmtg-typing-container { flex: 0 0 auto; padding: 0 12px 4px; }
+.bmtg-typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: #fff;
+  border-radius: 12px;
+  border-top-left-radius: 2px;
+  width: fit-content;
+  margin: 4px 0;
+  box-shadow: 0 1px 1px rgba(11,20,26,0.08);
+}
+.bmtg-typing-dot {
+  width: 6px;
+  height: 6px;
+  background: #90989d;
+  border-radius: 50%;
+  animation: bmtgBounce 1.4s infinite ease-in-out both;
+}
+.bmtg-typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.bmtg-typing-dot:nth-child(2) { animation-delay: -0.16s; }
+@keyframes bmtgBounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1.0); }
+}
+
+.bmtg-quick-replies {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  background: rgba(240, 242, 245, 0.7);
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+.bmtg-quick-replies::-webkit-scrollbar { display: none; }
+.bmtg-quick-chip {
+  background: #fff;
+  border: 1px solid var(--bmtg-wa-header2);
+  color: var(--bmtg-wa-header2);
+  padding: 5px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 0 0 auto;
+  font-family: inherit;
+}
+.bmtg-quick-chip:hover { background: var(--bmtg-wa-header2); color: #fff; }
+
+.bmtg-chat-actions {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border-top: 1px solid var(--bmtg-wa-border);
+  display: flex;
+  gap: 8px;
+  background: #f0f2f5;
+}
+.bmtg-chat-actions button, .bmtg-chat-actions a {
+  background: #fff;
+  border: 1px solid #d1d7db;
+  color: var(--bmtg-wa-text);
+  border-radius: 18px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  justify-content: center;
+  font-family: inherit;
+}
+.bmtg-chat-actions .bmtg-wa { background: var(--bmtg-wa-accent); color: #fff; border-color: var(--bmtg-wa-accent); font-weight: 500; }
 .bmtg-chat-actions svg{width:14px;height:14px;fill:currentColor}
-.bmtg-consent{font-size:11px;color:var(--bmtg-wa-muted);padding:8px 12px;background:#f0f2f5;border-top:1px solid var(--bmtg-wa-border)}
-.bmtg-lead-form{padding:10px;border-top:1px solid var(--bmtg-wa-border);background:#fff;max-height:45%;overflow:auto}
-.bmtg-lead-form label{display:block;font-size:12px;color:var(--bmtg-wa-muted);margin:4px 2px}
-.bmtg-lead-form input,.bmtg-lead-form textarea{width:100%;box-sizing:border-box;margin:4px 0 8px;padding:9px 10px;border:1px solid #d1d7db;border-radius:10px;font:inherit;background:#fff;color:var(--bmtg-wa-text)}
-.bmtg-lead-form textarea{min-height:64px;resize:vertical}
-.bmtg-lead-form .bmtg-consent-row{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--bmtg-wa-text);margin:6px 0}
-.bmtg-lead-form .bmtg-consent-row input{width:auto;margin:2px 0 0}
-.bmtg-lead-form button{background:var(--bmtg-wa-header2);color:#fff;border:none;border-radius:20px;padding:9px 16px;font-weight:600;cursor:pointer}
-.bmtg-chat-input{display:flex;gap:8px;padding:8px 10px;align-items:flex-end;background:#f0f2f5;border-top:1px solid var(--bmtg-wa-border)}
-.bmtg-chat-input textarea{flex:1;resize:none;border:none;border-radius:20px;padding:10px 14px;font:inherit;min-height:20px;max-height:110px;background:#fff;color:var(--bmtg-wa-text);outline:none}
-.bmtg-icon-btn{width:40px;height:40px;border-radius:50%;border:none;background:var(--bmtg-wa-header2);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 40px}
-.bmtg-icon-btn svg{width:20px;height:20px;fill:#fff}
-.bmtg-icon-btn:disabled{opacity:.6;cursor:default}
-@media (max-width:480px){.bmtg-chat-panel{right:8px;left:8px;bottom:86px;width:auto;height:72vh}.bmtg-chat-launcher .bmtg-launcher-label{display:none}}
-.bmtg-msg .bmtg-body p{margin:0 0 6px}
-.bmtg-msg .bmtg-body p:last-child{margin-bottom:0}
-.bmtg-msg .bmtg-body ul.bmtg-ul{margin:4px 0 6px 18px;padding:0}
-.bmtg-msg .bmtg-body li{margin:2px 0}
+
+.bmtg-lead-form {
+  flex: 0 1 auto;
+  padding: 10px 12px;
+  border-top: 1px solid var(--bmtg-wa-border);
+  background: #fff;
+  max-height: 38%;
+  overflow-y: auto;
+}
+.bmtg-lead-form label { display: block; font-size: 11.5px; color: var(--bmtg-wa-muted); margin: 4px 2px; font-weight: 500; }
+.bmtg-lead-form input, .bmtg-lead-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 2px 0 8px;
+  padding: 8px 10px;
+  border: 1px solid #d1d7db;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13.5px;
+  background: #fff;
+  color: var(--bmtg-wa-text);
+  outline: none;
+}
+.bmtg-lead-form input:focus, .bmtg-lead-form textarea:focus { border-color: var(--bmtg-wa-header2); }
+.bmtg-lead-form textarea { min-height: 56px; resize: vertical; }
+.bmtg-lead-form .bmtg-consent-row { display: flex; gap: 8px; align-items: flex-start; font-size: 11.5px; color: var(--bmtg-wa-muted); margin: 6px 0; }
+.bmtg-lead-form .bmtg-consent-row input { width: auto; margin: 2px 0 0; }
+.bmtg-lead-form button { background: var(--bmtg-wa-header2); color: #fff; border: none; border-radius: 20px; padding: 8px 16px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 4px; font-family: inherit; }
+
+.bmtg-chat-input {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  align-items: flex-end;
+  background: #f0f2f5;
+  border-top: 1px solid var(--bmtg-wa-border);
+}
+.bmtg-chat-input textarea {
+  flex: 1;
+  resize: none;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 14px;
+  min-height: 20px;
+  max-height: 100px;
+  background: #fff;
+  color: var(--bmtg-wa-text);
+  outline: none;
+}
+.bmtg-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bmtg-wa-header2);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: 0 0 40px;
+  transition: background 0.2s;
+}
+.bmtg-icon-btn:hover { background: var(--bmtg-wa-header); }
+.bmtg-icon-btn svg { width: 18px; height: 18px; fill: #fff; }
+
+@media (max-width: 480px) {
+  .bmtg-chat-panel { right: 0; left: 0; bottom: 0; width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+  .bmtg-chat-launcher { right: 16px; bottom: 16px; }
+  .bmtg-chat-launcher .bmtg-launcher-label { display: none; }
+  .bmtg-msg { max-width: 88%; }
+}
+
+.bmtg-msg .bmtg-body p { margin: 0 0 6px; }
+.bmtg-msg .bmtg-body p:last-child { margin-bottom: 0; }
+.bmtg-msg .bmtg-body ul.bmtg-ul { margin: 4px 0 6px 16px; padding: 0; }
+.bmtg-msg .bmtg-body li { margin: 2px 0; }
