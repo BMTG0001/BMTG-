@@ -1,0 +1,24 @@
+#bmtg-integrations-root { margin-top: 16px; }
+.bmtg-intro { margin: 12px 0 20px; color: #50575e; max-width: 900px; }
+.bmtg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.bmtg-card { background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 16px; }
+.bmtg-card h2 { margin: 0 0 8px; font-size: 18px; display:flex; justify-content:space-between; gap:8px; align-items:center; }
+.bmtg-badge { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: #f0f0f1; color: #1d2327; text-transform: capitalize; }
+.bmtg-badge.connected { background: #edfaef; color: #0a7a2f; }
+.bmtg-badge.error, .bmtg-badge.expired { background: #fcf0f1; color: #b32d2e; }
+.bmtg-badge.configured { background: #fff8e5; color: #8a6d00; }
+.bmtg-badge.disabled { background: #f0f0f1; color: #646970; }
+.bmtg-meta { font-size: 12px; color: #646970; margin: 6px 0; }
+.bmtg-field { margin: 10px 0; }
+.bmtg-field label { display:block; font-weight:600; margin-bottom:4px; }
+.bmtg-field input[type=text], .bmtg-field input[type=password] { width:100%; }
+.bmtg-help { font-size:12px; color:#646970; margin-top:4px; }
+.bmtg-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.bmtg-notice { padding: 8px 10px; border-left: 4px solid #72aee6; background:#f0f6fc; margin: 10px 0; }
+.bmtg-notice.error { border-left-color:#d63638; background:#fcf0f1; }
+.bmtg-notice.success { border-left-color:#00a32a; background:#edfaef; }
+.bmtg-banner { padding:10px 12px; border-radius:6px; margin-bottom:12px; }
+.bmtg-banner.warn { background:#fff8e5; border:1px solid #dba617; }
+.bmtg-banner.error { background:#fcf0f1; border:1px solid #d63638; }
+.bmtg-env { margin: 0 0 16px; }
+.bmtg-small { font-size:12px; color:#646970; }

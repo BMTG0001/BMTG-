@@ -1,0 +1,16 @@
+:root{--bmtg-white:#ffffff;--bmtg-gold:#c8a45d;--bmtg-gold-dark:#a8863d;--bmtg-black:#111111;--bmtg-muted:#666;}
+.bmtg-chat-launcher{position:fixed;right:20px;bottom:20px;z-index:99999;background:var(--bmtg-black);color:var(--bmtg-gold);border:1px solid var(--bmtg-gold);border-radius:999px;padding:12px 16px;font:600 14px/1.2 "Helvetica Neue",Arial,sans-serif;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.bmtg-chat-panel{position:fixed;right:20px;bottom:80px;width:360px;max-width:calc(100vw - 24px);height:520px;max-height:calc(100vh - 120px);background:var(--bmtg-white);color:var(--bmtg-black);border:1px solid rgba(200,164,93,.5);border-radius:16px;box-shadow:0 16px 40px rgba(0,0,0,.25);display:none;flex-direction:column;overflow:hidden;z-index:99999;font:14px/1.5 "Helvetica Neue",Arial,sans-serif}
+.bmtg-chat-panel.open{display:flex}
+.bmtg-chat-header{background:var(--bmtg-black);color:var(--bmtg-gold);padding:14px 16px;font-weight:600;letter-spacing:.2px}
+.bmtg-chat-messages{flex:1;overflow:auto;padding:14px;background:#faf9f6}
+.bmtg-msg{margin:8px 0;padding:10px 12px;border-radius:12px;max-width:85%}
+.bmtg-msg.assistant{background:#fff;border:1px solid rgba(200,164,93,.35)}
+.bmtg-msg.user{background:var(--bmtg-black);color:#fff;margin-left:auto}
+.bmtg-chat-input{display:flex;gap:8px;padding:10px;border-top:1px solid #eee;background:#fff}
+.bmtg-chat-input textarea{flex:1;resize:none;border:1px solid #ddd;border-radius:10px;padding:8px;font:inherit;min-height:40px;max-height:100px}
+.bmtg-chat-input button{background:var(--bmtg-gold);color:#111;border:none;border-radius:10px;padding:0 14px;font-weight:600;cursor:pointer}
+.bmtg-chat-actions{padding:8px 10px;border-top:1px solid #eee;display:flex;gap:8px;flex-wrap:wrap;background:#fff}
+.bmtg-chat-actions button{background:#fff;border:1px solid var(--bmtg-gold);color:#111;border-radius:999px;padding:6px 10px;font-size:12px;cursor:pointer}
+.bmtg-consent{font-size:12px;color:var(--bmtg-muted);padding:8px 10px;background:#fff;border-top:1px solid #eee}
+@media (max-width:480px){.bmtg-chat-panel{right:12px;left:12px;bottom:76px;width:auto;height:70vh}}
