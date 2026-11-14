@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'BMTG_VERSION', '0.1.0' );
+define( 'BMTG_VERSION', '0.1.1' );
 define( 'BMTG_PLUGIN_FILE', __FILE__ );
 define( 'BMTG_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BMTG_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

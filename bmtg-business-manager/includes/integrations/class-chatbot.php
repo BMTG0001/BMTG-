@@ -370,20 +370,25 @@ class Chatbot {
 	private function maybe_create_canva_itinerary( string $user_text, string $reply, array $messages ): ?array {
 		$s = $this->settings();
 		if ( empty( $s['canva_itinerary_enabled'] ) ) return null;
-		$t = mb_strtolower( $user_text . ' ' . $reply );
-		$wants = preg_match('/\b(itinerary|day\s*by\s*day|day-by-day|travel plan|trip plan|plan my|create.*plan|draft.*itinerary)\b/u', $t);
-		if ( ! $wants ) return null;
-		// require some destination/context or explicit ask; avoid firing on very short ambiguous text
-		if ( mb_strlen( trim( $user_text ) ) < 8 ) return null;
+		$text = trim( (string) $user_text );
+		$t = mb_strtolower( $text );
+		// Only when user explicitly asks to create/make/generate/design a Canva itinerary/plan.
+		$explicit = (bool) preg_match('/\b(canva|create|make|generate|design|draft|prepare|build)\b.{0,40}\b(itinerary|plan|day\s*by\s*day|trip\s*plan|travel\s*plan)\b|\b(itinerary|plan|day\s*by\s*day|trip\s*plan|travel\s*plan)\b.{0,40}\b(in|on|with)\s+canva\b/u', $t);
+		if ( ! $explicit ) return null;
+		if ( mb_strlen( $text ) < 10 ) return null;
+		// Require some destination/context so we don't create a blank/vague design.
+		$has_dest = (bool) preg_match('/\b(india|nepal|bhutan|sri lanka|taj|rajasthan|kerala|goa|himalaya|ladakh|kashmir|varanasi|delhi|jaipur|mumbai|kolkata|kathmandu|pokhara|colombo|kandy|galle|sigiriya|thimphu|paro|punakha)\b/i', $t);
+		$has_days = (bool) preg_match('/\b\d+\s*(day|days|night|nights)\b/i', $t);
+		if ( ! $has_dest && ! $has_days ) return null;
 		try {
 			if ( class_exists( '\\BMTG\\Integrations\\Itinerary' ) ) {
 				$title = 'BM Travel Group Journey';
-				if ( preg_match('/\b(india|nepal|bhutan|sri lanka|taj|rajasthan|kerala|himalaya|kathmandu|colombo)\b/i', $user_text, $m) ) {
+				if ( preg_match('/\b(india|nepal|bhutan|sri lanka|taj|rajasthan|kerala|himalaya|kathmandu|colombo)\b/i', $text, $m) ) {
 					$title = 'BM Travel Group - ' . ucwords(strtolower($m[1])) . ' Journey';
 				}
-				return \BMTG\Integrations\Itinerary::create_canva_itinerary( $title, $user_text, $s['canva_itinerary_template_id'] ?? '' );
+				return \BMTG\Integrations\Itinerary::create_canva_itinerary( $title, $text, $s['canva_itinerary_template_id'] ?? '' );
 			}
-		} catch ( \Throwable $e ) { return array( 'ok' => false, 'notice' => 'I can prepare the itinerary details here. Canva design is not available right now.' ); }
+		} catch ( \Throwable $e ) { return array( 'ok' => false, 'notice' => 'I can prepare the itinerary details here, but the Canva design is not available right now.' ); }
 		return null;
 	}
 
@@ -493,18 +498,18 @@ class Chatbot {
 			$knowledge = "\nApproved knowledge:\n- " . implode("\n- ", array_map('strval', $s['knowledge']));
 		}
 		$site = $this->get_site_context( $s );
-		return "You are the official BM Travel Group (BMTG) concierge for bmtravelgroup.com only. Chat like a friendly, responsive WhatsApp assistant on behalf of BM Travel Group. " .
-			"Style: keep messages short and punchy (no long walls of text). Use brief paragraphs, **bold** key names/dates/highlights, and simple bullet lists (max 3–5 items) when helpful. Use a few warm emojis sparingly (e.g. 👋 ✨ ✈️). Ask only one clarifying question at a time. Always end with a clear, low-friction follow-up question or quick prompt. " .
+		return "You are the official BM Travel Group (BMTG) concierge for bmtravelgroup.com only. Reply like a real human travel consultant in a WhatsApp chat, on behalf of BM Travel Group. " .
+			"Style: be warm, clear, and natural. Keep replies short (1-3 short sentences when possible). Answer only what the visitor asked. Ask at most one question at a time, and only when you need it to help them. Do not give long lists, menus, or multiple options unless the visitor asks for them. Avoid unnecessary emojis. " .
 			"You represent BM Travel Group exclusively. Never promote, recommend, compare, or provide information on behalf of any other company, competitor, travel agency, or third-party brand. If asked about another company, politely decline and offer BM Travel Group assistance instead. " .
 			"Use only approved BMTG knowledge and published bmtravelgroup.com information provided below, plus destination information relevant to BM Travel Group journeys in India, Nepal, Bhutan and Sri Lanka. " .
 			"When visitors ask about the company, journeys, destinations, services, or how to get in touch, answer using the bmtravelgroup.com/contact information below when relevant. " .
-			"If WhatsApp or other contact details are provided, you may share them clearly so the visitor can connect directly. " .
+			"If a visitor asks for WhatsApp or a way to connect, tell them the WhatsApp/contact link is ready to connect and share it clearly when provided below. If a visitor wants to share their details, tell them you can open the details form for them. " .
 			"Never disclose public prices, supplier rates, invented availability, or unconfirmed arrangements. " .
-			"Capture contact/travel requirements only when the visitor requests assistance and explicitly consents. " .
+			"Collect contact/travel requirements only when the visitor explicitly asks to share details and explicitly consents. " .
 			"Do not expose private guest conversations, proposals, itineraries or documents. " .
 			"Refuse and do not answer requests that are sexual, violent, hateful, illegal, abusive, or otherwise inappropriate; respond with a brief safe refusal and offer BM Travel Group travel assistance only. " .
-			"If information is unavailable, offer human handover. " .
-			"Never invent or include image URLs or markdown images. If the visitor asks to see a place/photo, describe it briefly; the system will attach an approved photo separately when available. If no photo can be shown, explain that and offer to assist with travel details.\nOperating hours/fallback guidance: " . (string) $s['operating_hours'] . $site . $knowledge;
+			"If information is unavailable, offer a simple handover to the team. " .
+			"Never invent or include image URLs or markdown images. If the visitor asks to see a place/photo, describe it briefly; the system may attach an approved photo separately when available.\nOperating hours/fallback guidance: " . (string) $s['operating_hours'] . $site . $knowledge;
 	}
 
 	private function get_site_context( array $s ): string {
