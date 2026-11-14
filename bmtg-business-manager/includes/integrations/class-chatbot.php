@@ -62,6 +62,7 @@ class Chatbot {
 			'business_address'     => '',
 			'logo_url'             => '',
 			'contact_email'        => '',
+			'lead_notify_email'    => '',
 			'contact_phone'        => '',
 			'quick_questions'      => array(
 				'What services do you offer?',
@@ -388,6 +389,7 @@ class Chatbot {
 				$reply = trim( $reply . "\n\n**Itinerary PDF (download/print):** " . $pdf_url );
 			}
 		}
+		$reply = $this->sanitize_email_claims( $reply, $pdf_url ?: null );
 		$messages[] = array( 'role' => 'assistant', 'content' => $reply, 'at' => gmdate( 'c' ) );
 		if ( $image ) {
 			$messages[] = array( 'role' => 'assistant', 'content' => '[image]', 'at' => gmdate( 'c' ), 'image' => $image );
@@ -656,6 +658,29 @@ class Chatbot {
 		return trim( $reply );
 	}
 
+	private function sanitize_email_claims( string $reply, ?string $pdf_url ): string {
+		$has_link = is_string( $pdf_url ) && $pdf_url !== '';
+		// If reply claims it sent/will send/email a PDF or itinerary, make it truthful.
+		if ( preg_match('/\b(i (will|can|have)|i\'ll|we (will|can|have)|we\'ll).{0,40}(email|send).{0,40}(pdf|itinerary)\b/i', $reply) || preg_match('/\b(sent|emailed).{0,40}(pdf|itinerary)\b/i', $reply) ) {
+			if ( $has_link ) {
+				// Keep the link context; remove misleading send phrasing.
+				$reply = preg_replace('/\bI (will|can|have) (prepare and )?(send|email) (the |this )?(pdf|itinerary)[^.!\n]*[.!\n]?/i', '', $reply);
+				$reply = preg_replace('/\bWe (will|can|have) (send|email) (the |this )?(pdf|itinerary)[^.!\n]*[.!\n]?/i', '', $reply);
+				$reply = preg_replace('/\b(sent|emailed) (the |this )?(pdf|itinerary)[^.!\n]*[.!\n]?/i', '', $reply);
+				if ( stripos($reply, $pdf_url) === false && stripos($reply, 'download') === false ) {
+					$reply .= "\n\nYou can view and download your itinerary here: " . $pdf_url;
+				}
+			} else {
+				$reply = preg_replace('/\bI (will|can|have) (prepare and )?(send|email) (the |this )?(pdf|itinerary)[^.!\n]*[.!\n]?/i', 'I can share a downloadable itinerary link here in chat. ', $reply);
+				$reply = preg_replace('/\bWe (will|can|have) (send|email) (the |this )?(pdf|itinerary)[^.!\n]*[.!\n]?/i', 'I can share a downloadable itinerary link here in chat. ', $reply);
+				$reply = preg_replace('/\b(sent|emailed) (the |this )?(pdf|itinerary)[^.!\n]*[.!\n]?/i', 'I can share a downloadable itinerary link here in chat. ', $reply);
+			}
+			$reply = preg_replace('/\n{3,}/', "\n\n", (string)$reply);
+			return trim($reply);
+		}
+		return trim( $reply );
+	}
+
 	public function rest_lead( \WP_REST_Request $req ): \WP_REST_Response {
 		$post = $this->get_conversation( $req );
 		if ( ! $post ) return $this->private_response( array( 'error' => 'Invalid session.' ), 403 );
@@ -678,7 +703,35 @@ class Chatbot {
 		if ( $lead_id ) update_post_meta( $post->ID, '_bmtg_lead_id', $lead_id );
 		$this->dispatch_inbox_event( $post->ID, 'lead_submitted', $contact );
 		do_action( 'bmtg_chatbot_lead_submitted', $contact, $post->ID, $lead_id );
+		$this->send_lead_notification( $contact, $post->ID, $lead_id );
 		return $this->private_response( array( 'ok' => true, 'lead_id' => $lead_id ) );
+	}
+
+	private function send_lead_notification( array $contact, int $conversation_id, $lead_id ): void {
+		$s = $this->settings();
+		$to = trim( (string) ( $s['lead_notify_email'] ?? '' ) );
+		if ( $to === '' ) $to = trim( (string) ( $s['contact_email'] ?? '' ) );
+		if ( $to === '' ) $to = (string) get_option( 'admin_email' );
+		if ( $to === '' || ! is_email( $to ) ) return;
+		$name = trim( (string) ( $contact['name'] ?? '' ) );
+		$email = trim( (string) ( $contact['email'] ?? '' ) );
+		$phone = trim( (string) ( $contact['phone'] ?? '' ) );
+		$reqs = trim( (string) ( $contact['requirements'] ?? '' ) );
+		$lines = array();
+		$lines[] = 'New BMTG chat lead received.';
+		$lines[] = '';
+		if ( $name !== '' ) $lines[] = 'Name: ' . $name;
+		if ( $email !== '' ) $lines[] = 'Email: ' . $email;
+		if ( $phone !== '' ) $lines[] = 'Phone: ' . $phone;
+		if ( $lead_id ) $lines[] = 'CRM Lead ID: ' . $lead_id;
+		$lines[] = 'Conversation ID: ' . $conversation_id;
+		if ( $reqs !== '' ) { $lines[] = ''; $lines[] = 'Requirements:'; $lines[] = $reqs; }
+		$lines[] = '';
+		$lines[] = 'Submitted at: ' . gmdate( 'Y-m-d H:i:s' ) . ' UTC';
+		$subject = 'New BMTG Chat Lead' . ( $name !== '' ? ': ' . $name : '' );
+		$headers = array( 'Content-Type: text/plain; charset=UTF-8' );
+		if ( $email !== '' && is_email( $email ) ) $headers[] = 'Reply-To: ' . $name . ' <' . $email . '>';
+		wp_mail( $to, $subject, implode( "\n", $lines ), $headers );
 	}
 
 	public function rest_handover( \WP_REST_Request $req ): \WP_REST_Response {

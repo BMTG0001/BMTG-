@@ -72,6 +72,7 @@ class Chatbot_Admin {
 		$out['business_name'] = sanitize_text_field( $input['business_name'] ?? $defaults['business_name'] );
 		$out['business_address'] = sanitize_textarea_field( $input['business_address'] ?? '' );
 		$out['contact_email'] = sanitize_email( $input['contact_email'] ?? '' );
+		$out['lead_notify_email'] = sanitize_email( $input['lead_notify_email'] ?? '' );
 		$out['contact_phone'] = sanitize_text_field( $input['contact_phone'] ?? '' );
 		$out['logo_url'] = esc_url_raw( $input['logo_url'] ?? '' );
 		$out['retention_days'] = max( 1, min( 3650, (int) ( $input['retention_days'] ?? $defaults['retention_days'] ) ) );
@@ -196,6 +197,7 @@ class Chatbot_Admin {
 					<tr><th scope="row">WhatsApp prefilled message</th><td><textarea name="<?php echo esc_attr($opt); ?>[whatsapp_prefill]" rows="2" class="large-text"><?php echo esc_textarea($s['whatsapp_prefill'] ?? ''); ?></textarea></td></tr>
 					<tr><th scope="row">Business name</th><td><input type="text" class="regular-text" name="<?php echo esc_attr($opt); ?>[business_name]" value="<?php echo esc_attr($s['business_name'] ?? ''); ?>"></td></tr>
 					<tr><th scope="row">Contact email</th><td><input type="email" class="regular-text" name="<?php echo esc_attr($opt); ?>[contact_email]" value="<?php echo esc_attr($s['contact_email'] ?? ''); ?>"><p class="description">Shared with the chatbot so it can provide contact details to visitors.</p></td></tr>
+					<tr><th scope="row">Lead alert email (notifications)</th><td><input type="email" class="regular-text" name="<?php echo esc_attr($opt); ?>[lead_notify_email]" value="<?php echo esc_attr($s['lead_notify_email'] ?? ''); ?>" placeholder="e.g. travelintoindia@gmail.com"><p class="description">Receives an email when a chat lead/details form is submitted. Leave blank to use Contact email (or site admin email). Uses WordPress mail delivery (wp_mail) configured on your site.</p></td></tr>
 					<tr><th scope="row">Contact phone</th><td><input type="text" class="regular-text" name="<?php echo esc_attr($opt); ?>[contact_phone]" value="<?php echo esc_attr($s['contact_phone'] ?? ''); ?>"></td></tr>
 					<tr><th scope="row">Business address (for itineraries)</th><td><textarea name="<?php echo esc_attr($opt); ?>[business_address]" rows="3" class="large-text"><?php echo esc_textarea($s['business_address'] ?? ''); ?></textarea></td></tr>
 					<tr><th scope="row">Logo URL (for itineraries)</th><td><input type="url" class="regular-text" name="<?php echo esc_attr($opt); ?>[logo_url]" value="<?php echo esc_attr($s['logo_url'] ?? ''); ?>"></td></tr>
