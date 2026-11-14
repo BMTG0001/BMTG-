@@ -90,9 +90,9 @@ class Rest {
 		register_rest_route( $ns, '/integrations/(?P<id>[a-z0-9_-]+)/callback', array(
 			'methods'             => 'GET',
 			'callback'            => array( $this, 'oauth_callback' ),
-			'permission_callback' => array( $this, 'can_manage_callback' ),
+			'permission_callback' => '__return_true', // Provider redirect: state validated in handler.
 			'args'                => array(
-				'state' => array( 'required' => true, 'type' => 'string' ),
+				'state' => array( 'required' => false, 'type' => 'string' ),
 				'code'  => array( 'required' => false, 'type' => 'string' ),
 				'error' => array( 'required' => false, 'type' => 'string' ),
 				'error_description' => array( 'required' => false, 'type' => 'string' ),
@@ -132,8 +132,8 @@ class Rest {
 	}
 
 	public function can_manage_callback( \WP_REST_Request $request = null ): bool {
-		// Callback must be same logged-in admin user; nonce not present on provider redirect, so capability + state-user binding enforced in handler.
-		return is_user_logged_in() && current_user_can( Activator::CAPABILITY );
+		// OAuth callbacks arrive as external redirects; strict state validation is enforced in OAuth_Flow::handle_callback().
+		return true;
 	}
 
 	private function response( $data, int $status = 200 ): \WP_REST_Response {
@@ -278,19 +278,24 @@ class Rest {
 		$code  = (string) $request->get_param( 'code' );
 		$error = (string) $request->get_param( 'error' );
 		$desc  = (string) $request->get_param( 'error_description' );
+		$is_browser = isset( $_SERVER['HTTP_ACCEPT'] ) && strpos( (string) $_SERVER['HTTP_ACCEPT'], 'text/html' ) !== false;
+		$admin_url_ok  = admin_url( 'options-general.php?page=bmtg-integrations&oauth=' . rawurlencode( $connector->id() ) . '&result=ok' );
+		$admin_url_err = admin_url( 'options-general.php?page=bmtg-integrations&oauth=' . rawurlencode( $connector->id() ) . '&result=error' );
+
 		if ( $error ) {
-			$msg = $this->audit ? $desc : $error;
+			$msg = wp_strip_all_tags( $desc ?: $error );
 			$this->audit->log( $connector->id(), 'oauth_callback', null, 'error', $error );
-			return $this->response( array( 'ok' => false, 'error' => wp_strip_all_tags( $desc ?: $error ) ), 400 );
+			if ( $is_browser ) { wp_safe_redirect( $admin_url_err ); exit; }
+			return $this->response( array( 'ok' => false, 'error' => $msg ), 400 );
 		}
-		if ( ! $code ) {
-			return $this->response( array( 'ok' => false, 'error' => 'Missing authorization code.' ), 400 );
+		if ( $state === '' || $code === '' ) {
+			if ( $is_browser ) { wp_safe_redirect( $admin_url_err ); exit; }
+			return $this->response( array( 'ok' => false, 'error' => 'Missing authorization state or code.' ), 400 );
 		}
 		$result = $this->oauth->handle_callback( $connector, $state, $code );
 		$status = ! empty( $result['ok'] ) ? 200 : 400;
-		// Redirect back to admin page when called as browser redirect; also return JSON.
-		$admin_url = admin_url( 'options-general.php?page=bmtg-integrations&oauth=' . rawurlencode( $connector->id() ) . '&result=' . ( ! empty( $result['ok'] ) ? 'ok' : 'error' ) );
-		if ( isset( $_SERVER['HTTP_ACCEPT'] ) && strpos( (string) $_SERVER['HTTP_ACCEPT'], 'text/html' ) !== false ) {
+		$admin_url = ! empty( $result['ok'] ) ? $admin_url_ok : $admin_url_err;
+		if ( $is_browser ) {
 			wp_safe_redirect( $admin_url );
 			exit;
 		}

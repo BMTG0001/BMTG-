@@ -70,9 +70,8 @@ class OAuth_Flow {
 
 	/** @return array{ok:bool,message:string} */
 	public function handle_callback( Connector_Interface $connector, string $state, string $code, string $environment = 'live' ): array {
-		$user_id = get_current_user_id();
-		if ( ! $user_id || ! current_user_can( Activator::CAPABILITY ) ) {
-			return array( 'ok' => false, 'message' => 'Permission denied.' );
+		if ( $state === '' || $code === '' ) {
+			return array( 'ok' => false, 'message' => 'Missing authorization state or code.' );
 		}
 		$key    = self::TRANSIENT_PREFIX . $state;
 		$record = get_transient( $key );
@@ -80,16 +79,18 @@ class OAuth_Flow {
 		if ( ! is_array( $record ) ) {
 			return array( 'ok' => false, 'message' => 'Invalid or expired OAuth state.' );
 		}
-		if ( (int) $record['user_id'] !== $user_id ) {
-			$this->audit->log( $connector->id(), 'oauth_callback', null, 'error', 'user_mismatch' );
-			return array( 'ok' => false, 'message' => 'OAuth state does not belong to this user.' );
-		}
 		if ( ( $record['connector_id'] ?? '' ) !== $connector->id() ) {
 			return array( 'ok' => false, 'message' => 'OAuth state connector mismatch.' );
 		}
 		$env = $this->token_store->normalize_env( $record['environment'] ?? $environment );
 		if ( time() - (int) ( $record['created_at'] ?? 0 ) > self::STATE_TTL ) {
 			return array( 'ok' => false, 'message' => 'OAuth state expired.' );
+		}
+		// State is unguessable, single-use and server-issued to an authorized admin; allow completion even if browser session changed on redirect. If a session is present, ensure it has capability.
+		$user_id = get_current_user_id();
+		if ( $user_id && ! current_user_can( Activator::CAPABILITY ) ) {
+			$this->audit->log( $connector->id(), 'oauth_callback', null, 'error', 'permission_denied' );
+			return array( 'ok' => false, 'message' => 'Permission denied.' );
 		}
 
 		$redirect_uri = $this->redirect_uri( $connector->id() );
