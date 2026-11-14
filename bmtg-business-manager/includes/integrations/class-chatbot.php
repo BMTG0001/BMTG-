@@ -519,7 +519,6 @@ class Chatbot {
 		) );
 		foreach ( $q->posts as $id ) { wp_delete_post( (int) $id, true ); }
 	}
-}
 
 	public function rest_webhook_facebook( \WP_REST_Request $req ) {
 		if ( $req->get_method() === 'GET' ) {
@@ -688,3 +687,4 @@ class Chatbot {
 			// best-effort; do not leak errors
 		}
 	}
+}
