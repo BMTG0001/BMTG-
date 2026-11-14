@@ -33,36 +33,36 @@ class Rest {
 	}
 
 	public function register_routes(): void {
-		$ns = 'bmtg/v1/integrations';
+		$ns = 'bmtg/v1';
 
-		register_rest_route( $ns, '', array(
+		register_rest_route( $ns, '/integrations', array(
 			'methods'             => 'GET',
 			'callback'            => array( $this, 'list_connectors' ),
 			'permission_callback' => array( $this, 'can_manage' ),
 		) );
 
-		register_rest_route( $ns, '/(?P<id>[a-z0-9_-]+)', array(
+		register_rest_route( $ns, '/integrations/(?P<id>[a-z0-9_-]+)', array(
 			'methods'             => 'GET',
 			'callback'            => array( $this, 'get_connector' ),
 			'permission_callback' => array( $this, 'can_manage' ),
 			'args'                => $this->common_args(),
 		) );
 
-		register_rest_route( $ns, '/(?P<id>[a-z0-9_-]+)/save', array(
+		register_rest_route( $ns, '/integrations/(?P<id>[a-z0-9_-]+)/save', array(
 			'methods'             => 'POST',
 			'callback'            => array( $this, 'save_fields' ),
 			'permission_callback' => array( $this, 'can_manage' ),
 			'args'                => $this->common_args(),
 		) );
 
-		register_rest_route( $ns, '/(?P<id>[a-z0-9_-]+)/test', array(
+		register_rest_route( $ns, '/integrations/(?P<id>[a-z0-9_-]+)/test', array(
 			'methods'             => 'POST',
 			'callback'            => array( $this, 'test_connector' ),
 			'permission_callback' => array( $this, 'can_manage' ),
 			'args'                => $this->common_args(),
 		) );
 
-		register_rest_route( $ns, '/(?P<id>[a-z0-9_-]+)/toggle', array(
+		register_rest_route( $ns, '/integrations/(?P<id>[a-z0-9_-]+)/toggle', array(
 			'methods'             => 'POST',
 			'callback'            => array( $this, 'toggle_connector' ),
 			'permission_callback' => array( $this, 'can_manage' ),
@@ -71,7 +71,7 @@ class Rest {
 			) ),
 		) );
 
-		register_rest_route( $ns, '/(?P<id>[a-z0-9_-]+)/remove', array(
+		register_rest_route( $ns, '/integrations/(?P<id>[a-z0-9_-]+)/remove', array(
 			'methods'             => 'POST',
 			'callback'            => array( $this, 'remove_field' ),
 			'permission_callback' => array( $this, 'can_manage' ),
@@ -80,14 +80,14 @@ class Rest {
 			) ),
 		) );
 
-		register_rest_route( $ns, '/(?P<id>[a-z0-9_-]+)/connect', array(
+		register_rest_route( $ns, '/integrations/(?P<id>[a-z0-9_-]+)/connect', array(
 			'methods'             => 'POST',
 			'callback'            => array( $this, 'oauth_connect' ),
 			'permission_callback' => array( $this, 'can_manage' ),
 			'args'                => $this->common_args(),
 		) );
 
-		register_rest_route( $ns, '/(?P<id>[a-z0-9_-]+)/callback', array(
+		register_rest_route( $ns, '/integrations/(?P<id>[a-z0-9_-]+)/callback', array(
 			'methods'             => 'GET',
 			'callback'            => array( $this, 'oauth_callback' ),
 			'permission_callback' => array( $this, 'can_manage_callback' ),
@@ -99,7 +99,7 @@ class Rest {
 			),
 		) );
 
-		register_rest_route( $ns, '/key-rotation/start', array(
+		register_rest_route( $ns, '/integrations/key-rotation/start', array(
 			'methods'             => 'POST',
 			'callback'            => array( $this, 'key_rotation_start' ),
 			'permission_callback' => array( $this, 'can_manage' ),
@@ -108,7 +108,7 @@ class Rest {
 			),
 		) );
 
-		register_rest_route( $ns, '/key-rotation/status', array(
+		register_rest_route( $ns, '/integrations/key-rotation/status', array(
 			'methods'             => 'GET',
 			'callback'            => array( $this, 'key_rotation_status' ),
 			'permission_callback' => array( $this, 'can_manage' ),

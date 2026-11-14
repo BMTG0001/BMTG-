@@ -15,7 +15,9 @@ class Config {
 	}
 
 	public function key_error_message(): string {
-		$this->get_key();
+		if ( $this->is_key_configured() ) {
+			return '';
+		}
 		return $this->key_error ?: __( 'BMTG_ENCRYPTION_KEY is not configured.', 'bmtg-business-manager' );
 	}
 
