@@ -10,6 +10,8 @@ class Itinerary {
 		add_action( 'rest_api_init', array( __CLASS__, 'routes' ) );
 		add_action( 'admin_post_bmtg_itinerary_pdf', array( __CLASS__, 'render_pdf' ) );
 		add_action( 'admin_post_nopriv_bmtg_itinerary_pdf', array( __CLASS__, 'render_pdf_public' ) );
+		add_action( 'admin_post_bmtg_itinerary_doc', array( __CLASS__, 'download_doc' ) );
+		add_action( 'admin_post_bmtg_itinerary_send_client', array( __CLASS__, 'send_to_client' ) );
 	}
 
 	public static function routes(): void {
@@ -59,7 +61,8 @@ class Itinerary {
 		$doc = self::store_pdf_doc($structured, $images, $conversation_id);
 		if (!$doc) return array('ok'=>false);
 		$url = add_query_arg(array('action'=>'bmtg_itinerary_pdf','doc'=>$doc['token']), admin_url('admin-post.php'));
-		return array('ok'=>true, 'pdf_url'=>$url, 'title'=>$structured['title'] ?? $title);
+		$doc_url = add_query_arg(array('action'=>'bmtg_itinerary_doc','doc'=>$doc['token']), admin_url('admin-post.php'));
+		return array('ok'=>true, 'pdf_url'=>$url, 'doc_url'=>$doc_url, 'doc_token'=>$doc['token'], 'title'=>$structured['title'] ?? $title, 'structured'=>$structured);
 	}
 
 	private static function generate_structured_draft( string $title, string $dest, int $days, string $notes ): array {
@@ -250,7 +253,51 @@ class Itinerary {
 		);
 		$ok = set_transient($key, $payload, 7 * DAY_IN_SECONDS);
 		if (!$ok) return null;
+		if ( $conversation_id > 0 ) {
+			update_post_meta( $conversation_id, '_bmtg_itinerary_token', $token );
+			update_post_meta( $conversation_id, '_bmtg_itinerary_at', time() );
+		}
 		return array('token'=>$token,'key'=>$key);
+	}
+
+	public static function get_doc_data( string $token ): ?array {
+		if ($token === '' || !preg_match('/^[A-Za-z0-9]+$/', $token)) return null;
+		$data = get_transient('bmtg_itpdf_' . $token);
+		if (!is_array($data)) return null;
+		if (!empty($data['v']) && $data['v'] === 2 && !empty($data['data'])) {
+			return array('structured'=>is_array($data['data'])?$data['data']:array(), 'images'=>is_array($data['images']??null)?$data['images']:array(), 'cid'=>(int)($data['cid']??0));
+		}
+		$structured = array(
+			'title' => (string)($data['title'] ?? 'Itinerary'),
+			'subtitle' => (string)($data['dest'] ?? ''),
+			'tagline' => 'Curated. Private. Exceptional.',
+			'destinations' => (string)($data['dest'] ?? ''),
+			'overview' => '',
+			'facts' => array(),
+			'days' => array(array('day'=>1,'title'=>'Itinerary','body'=>(string)($data['body'] ?? ''))),
+			'closing' => 'Please contact BM Travel Group to personalise and confirm your journey.',
+			'notes' => '',
+		);
+		return array('structured'=>$structured,'images'=>array(),'cid'=>(int)($data['cid']??0));
+	}
+
+	public static function save_doc_data( string $token, array $structured, array $images = array(), int $cid = 0 ): bool {
+		if ($token === '' || !preg_match('/^[A-Za-z0-9]+$/', $token)) return false;
+		$key = 'bmtg_itpdf_' . $token;
+		$existing = get_transient($key);
+		if (!is_array($existing)) return false;
+		$payload = array('v'=>2,'data'=>$structured,'images'=>array_slice($images,0,8),'cid'=>$cid?: (int)($existing['cid']??0),'at'=>time());
+		return (bool) set_transient($key, $payload, 7 * DAY_IN_SECONDS);
+	}
+
+	public static function admin_urls_for_token( string $token ): array {
+		if ($token === '') return array();
+		$base = admin_url('admin-post.php');
+		return array(
+			'view' => add_query_arg(array('action'=>'bmtg_itinerary_pdf','doc'=>$token), $base),
+			'doc'  => add_query_arg(array('action'=>'bmtg_itinerary_doc','doc'=>$token), $base),
+			'edit' => add_query_arg(array('page'=>'bmtg-chatbot','bmtg_it_token'=>$token), admin_url('admin.php')),
+		);
 	}
 
 	public static function render_pdf(): void {
@@ -302,6 +349,173 @@ class Itinerary {
 		header('X-Content-Type-Options: nosniff');
 		echo $html;
 		exit;
+	}
+
+	public static function download_doc(): void {
+		if ( ! current_user_can('manage_options') && ! current_user_can(\BMTG\CRM\Capabilities::MANAGE_LEADS) ) wp_die('Forbidden');
+		$token = isset($_GET['doc']) ? sanitize_text_field((string) $_GET['doc']) : '';
+		if ( $token !== '' ) {
+			check_admin_referer('bmtg_itinerary_doc_' . $token);
+			$data = self::get_doc_data($token);
+			if (!$data) wp_die('This itinerary draft has expired. Please regenerate it from the chat review.');
+			$structured = $data['structured'];
+			$images = $data['images'];
+		} else {
+			check_admin_referer('bmtg_itinerary_doc');
+			$token = '';
+			$structured = self::structured_from_post();
+			$images = array();
+		}
+		$doc = self::render_doc_html($structured, $images);
+		$filename = sanitize_file_name(($structured['title'] ?? 'BMTG-Itinerary')) . '.doc';
+		nocache_headers();
+		header('Content-Type: application/msword; charset=utf-8');
+		header('Content-Disposition: attachment; filename="' . $filename . '"');
+		header('X-Content-Type-Options: nosniff');
+		echo "\xEF\xBB\xBF" . $doc;
+		exit;
+	}
+
+	public static function send_to_client(): void {
+		if ( ! current_user_can('manage_options') && ! current_user_can(\BMTG\CRM\Capabilities::MANAGE_LEADS) ) wp_die('Forbidden');
+		check_admin_referer('bmtg_itinerary_send');
+		$token = isset($_POST['doc']) ? sanitize_text_field((string) $_POST['doc']) : '';
+		$to = isset($_POST['client_email']) ? sanitize_email((string) $_POST['client_email']) : '';
+		$subject = isset($_POST['subject']) ? sanitize_text_field((string) wp_unslash($_POST['subject'])) : '';
+		$message = isset($_POST['message']) ? sanitize_textarea_field((string) wp_unslash($_POST['message'])) : '';
+		$attach_doc = ! empty($_POST['attach_doc']);
+		$back = admin_url('admin.php?page=bmtg-chatbot' . ($token ? '&bmtg_it_token=' . rawurlencode($token) : ''));
+
+		$structured = array(); $images = array(); $cid = 0;
+		if ($token !== '') {
+			$data = self::get_doc_data($token);
+			if ($data) { $structured = $data['structured']; $images = $data['images']; $cid = (int)$data['cid']; }
+		}
+		if (empty($structured)) $structured = self::structured_from_post();
+
+		if (!$to || !is_email($to)) {
+			wp_safe_redirect(add_query_arg(array('bmtg_msg'=>'invalid_email'), $back)); exit;
+		}
+		$title = $structured['title'] ?? 'Your BM Travel Group Itinerary';
+		if ($subject === '') $subject = $title . ' — BM Travel Group';
+		if ($message === '') {
+			$message = "Dear Traveller,\n\nPlease find your curated itinerary from BM Travel Group below/attached for your review.\n\nWarm regards,\nBM Travel Group";
+		}
+		$attachments = array();
+		$tmp = '';
+		if ($attach_doc) {
+			$doc_html = self::render_doc_html($structured, $images);
+			$fname = sanitize_file_name($title ?: 'BMTG-Itinerary') . '.doc';
+			$tmp = wp_tempnam($fname);
+			if ($tmp) {
+				file_put_contents($tmp, "\xEF\xBB\xBF" . $doc_html);
+				// rename to .doc for mail clients
+				$doc_path = preg_replace('/\.tmp$/i', '', $tmp) . '-' . $fname;
+				if (@rename($tmp, $doc_path)) { $tmp = $doc_path; } else { $doc_path = $tmp; }
+				$attachments[] = $doc_path;
+			}
+		}
+		$headers = array('Content-Type: text/plain; charset=UTF-8');
+		$sent = wp_mail($to, $subject, $message, $headers, $attachments);
+		if ($tmp && file_exists($tmp)) @unlink($tmp);
+
+		if ($sent && $cid > 0) {
+			update_post_meta($cid, '_bmtg_itinerary_sent_to', $to);
+			update_post_meta($cid, '_bmtg_itinerary_sent_at', time());
+		}
+		wp_safe_redirect(add_query_arg(array('bmtg_msg'=> $sent ? 'sent' : 'send_failed'), $back));
+		exit;
+	}
+
+	private static function structured_from_post(): array {
+		$get = function($k){ return isset($_POST[$k]) ? wp_unslash($_POST[$k]) : ''; };
+		$days = array();
+		$titles = isset($_POST['day_title']) && is_array($_POST['day_title']) ? $_POST['day_title'] : array();
+		$bodies = isset($_POST['day_body']) && is_array($_POST['day_body']) ? $_POST['day_body'] : array();
+		$max = max(count($titles), count($bodies));
+		for ($i=0; $i<$max; $i++) {
+			$dt = sanitize_text_field((string) wp_unslash($titles[$i] ?? ''));
+			$db = sanitize_textarea_field((string) wp_unslash($bodies[$i] ?? ''));
+			if ($dt === '' && $db === '') continue;
+			$days[] = array('day'=>$i+1,'title'=>$dt ?: ('Day '.($i+1)),'body'=>$db);
+		}
+		$facts = array();
+		$fl = isset($_POST['fact_label']) && is_array($_POST['fact_label']) ? $_POST['fact_label'] : array();
+		$fv = isset($_POST['fact_value']) && is_array($_POST['fact_value']) ? $_POST['fact_value'] : array();
+		for ($i=0; $i<max(count($fl),count($fv)); $i++) {
+			$lab = sanitize_text_field((string) wp_unslash($fl[$i] ?? ''));
+			$val = sanitize_text_field((string) wp_unslash($fv[$i] ?? ''));
+			if ($lab === '' && $val === '') continue;
+			$facts[] = array('label'=>$lab,'value'=>$val);
+		}
+		return array(
+			'title' => sanitize_text_field((string)$get('title')) ?: 'Bespoke Journey',
+			'subtitle' => sanitize_text_field((string)$get('subtitle')),
+			'tagline' => 'Curated. Private. Exceptional.',
+			'destinations' => sanitize_text_field((string)$get('destinations')),
+			'overview' => sanitize_textarea_field((string)$get('overview')),
+			'facts' => $facts,
+			'days' => $days ?: array(array('day'=>1,'title'=>'Day 1','body'=>sanitize_textarea_field((string)$get('body')))),
+			'closing' => sanitize_textarea_field((string)$get('closing')),
+			'notes' => sanitize_textarea_field((string)$get('notes')),
+		);
+	}
+
+	public static function render_doc_html( array $structured, array $images = array() ): string {
+		$s = get_option('bmtg_chatbot_settings', array());
+		$biz = (string)($s['business_name'] ?? 'BM Travel Group');
+		$addr = (string)($s['business_address'] ?? '');
+		$email = (string)($s['contact_email'] ?? '');
+		$phone = (string)($s['contact_phone'] ?? '');
+		$wa_num = preg_replace('/\D+/', '', (string)($s['whatsapp_number'] ?? ''));
+		$e = function($v){ return esc_html((string)$v); };
+		$ep = function($v){ return nl2br(esc_html((string)$v)); };
+		$eu = function($v){ return esc_url((string)$v); };
+		$title = (string)($structured['title'] ?? 'Bespoke Journey');
+		$subtitle = (string)($structured['subtitle'] ?? ($structured['destinations'] ?? ''));
+		$tagline = 'Curated. Private. Exceptional.';
+		$overview = (string)($structured['overview'] ?? '');
+		$facts = is_array($structured['facts'] ?? null) ? $structured['facts'] : array();
+		$days = is_array($structured['days'] ?? null) ? $structured['days'] : array();
+		$closing = (string)($structured['closing'] ?? '');
+		$notes = (string)($structured['notes'] ?? '');
+		$logo = (string)($s['logo_url'] ?? '');
+		$logo_html = $logo !== '' ? '<img src="'.$eu($logo).'" alt="'.$e($biz).'" height="60" style="max-height:60px">' : '<div style="font-size:24px;font-weight:bold">'.$e($biz).'</div>';
+		$hero = !empty($images[0]['url']) ? '<p><img src="'.$eu($images[0]['url']).'" alt="'.$e($title).'" style="width:100%;max-width:680px;height:auto"></p>' : '';
+		$contact = array();
+		if ($addr) $contact[] = $e(preg_replace('/\s+/',' ',$addr));
+		if ($email) $contact[] = $e($email);
+		if ($phone) $contact[] = $e($phone);
+		if ($wa_num) $contact[] = 'WhatsApp: +' . $e($wa_num);
+		$contact_html = implode(' | ', $contact);
+
+		$facts_html = '';
+		if ($facts) {
+			$facts_html .= '<h2>Facts &amp; Highlights</h2><table border="0" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%">';
+			foreach ($facts as $f) {
+				$facts_html .= '<tr><td style="font-weight:bold;border-bottom:1px solid #ddd;width:35%">'.$e($f['label']??'').'</td><td style="border-bottom:1px solid #ddd">'.$e($f['value']??'').'</td></tr>';
+			}
+			$facts_html .= '</table>';
+		}
+		$days_html = '';
+		foreach ($days as $i=>$d) {
+			$dn = (int)($d['day'] ?? ($i+1));
+			$dt = (string)($d['title'] ?? '');
+			$db = (string)($d['body'] ?? '');
+			$img = $images[($i+1) % max(1,count($images))]['url'] ?? '';
+			$img_html = $img ? '<p><img src="'.$eu($img).'" alt="'.$e($dt).'" style="width:100%;max-width:520px;height:auto"></p>' : '';
+			$days_html .= '<h2>Day '.$dn.($dt?': '.$e($dt):'').'</h2>'.$img_html.'<p style="text-align:justify;line-height:1.7">'.$ep($db).'</p>';
+		}
+		return '<!doctype html><html><head><meta charset="utf-8"><title>'.$e($title).'</title></head><body style="font-family:Calibri,Arial,sans-serif;color:#1f2937;line-height:1.6">'
+			.'<div style="text-align:center;border-bottom:1px solid #e8e2d6;padding-bottom:12px;margin-bottom:18px">'.$logo_html.'<div style="letter-spacing:2px;color:#c6a75e;font-weight:bold;margin-top:6px">'.$e($tagline).'</div><h1 style="margin:12px 0 4px">'.$e($title).'</h1><div style="color:#6b7280">'.$e($subtitle).'</div></div>'
+			.$hero
+			.($overview?'<h2>Overview</h2><p style="text-align:justify;line-height:1.7">'.$ep($overview).'</p>':'')
+			.$facts_html
+			.$days_html
+			.($closing?'<h2>Plan Your Journey</h2><p style="text-align:justify;line-height:1.7">'.$ep($closing).'</p>':'')
+			.($notes?'<p style="text-align:justify;line-height:1.7">'.$ep($notes).'</p>':'')
+			.'<hr style="border:none;border-top:1px solid #e8e2d6;margin-top:24px"><p style="font-size:12px;color:#4b5563;text-align:center">'.$contact_html.'</p>'
+			.'</body></html>';
 	}
 
 	public static function render_html( $structured_or_title, $dest_or_images = '', string $body_legacy = '' ): string {

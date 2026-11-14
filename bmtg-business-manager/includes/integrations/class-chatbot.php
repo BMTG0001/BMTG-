@@ -383,7 +383,8 @@ class Chatbot {
 			}
 			$extra['canva'] = $canva;
 		}
-		$pdf_url = $this->maybe_create_itinerary_pdf( $text, $messages, $post->ID );
+		$pdf = $this->maybe_create_itinerary_pdf( $text, $messages, $post->ID );
+		$pdf_url = is_array($pdf) ? (string)($pdf['pdf_url'] ?? '') : '';
 		if ( $pdf_url ) {
 			if ( stripos( $reply, $pdf_url ) === false && stripos( $reply, 'Download itinerary' ) === false ) {
 				$reply = trim( $reply . "\n\n**Itinerary PDF (download/print):** " . $pdf_url );
@@ -437,7 +438,7 @@ class Chatbot {
 		return (bool) preg_match('/\b(pdf|download|print|printable|save.*itinerary|itinerary.*(pdf|download|print))\b/u', $t);
 	}
 
-	private function maybe_create_itinerary_pdf( string $user_text, array $messages, int $conversation_id ): ?string {
+	private function maybe_create_itinerary_pdf( string $user_text, array $messages, int $conversation_id ): ?array {
 		$t = mb_strtolower( (string) $user_text );
 		// Create when user explicitly asks for pdf/download/print of an itinerary/plan, or asks to create/generate an itinerary.
 		$wants_pdf = $this->user_wants_pdf( $user_text ) && preg_match('/\b(itinerary|plan|trip|journey|tour)\b/u', $t);
@@ -447,7 +448,7 @@ class Chatbot {
 		try {
 			if ( class_exists( '\\BMTG\\Integrations\\Itinerary' ) ) {
 				$pdf = \BMTG\Integrations\Itinerary::generate_chat_pdf( $user_text, $conversation_id );
-				if ( is_array($pdf) && ! empty($pdf['pdf_url']) ) return (string) $pdf['pdf_url'];
+				if ( is_array($pdf) && ! empty($pdf['pdf_url']) ) return $pdf;
 			}
 		} catch ( \Throwable $e ) { return null; }
 		return null;
@@ -704,6 +705,7 @@ class Chatbot {
 		$this->dispatch_inbox_event( $post->ID, 'lead_submitted', $contact );
 		do_action( 'bmtg_chatbot_lead_submitted', $contact, $post->ID, $lead_id );
 		$this->send_lead_notification( $contact, $post->ID, $lead_id );
+		$this->send_internal_review_notification( $contact, $post->ID, $lead_id );
 		return $this->private_response( array( 'ok' => true, 'lead_id' => $lead_id ) );
 	}
 
@@ -732,6 +734,82 @@ class Chatbot {
 		$headers = array( 'Content-Type: text/plain; charset=UTF-8' );
 		if ( $email !== '' && is_email( $email ) ) $headers[] = 'Reply-To: ' . $name . ' <' . $email . '>';
 		wp_mail( $to, $subject, implode( "\n", $lines ), $headers );
+	}
+
+	private function send_internal_review_notification( array $contact, int $conversation_id, $lead_id ): void {
+		$s = $this->settings();
+		$to = 'travelintoindia@gmail.com'; // always notify internal review inbox as requested
+		if ( ! is_email( $to ) ) return;
+		// Best-effort: ensure a draft itinerary exists for this conversation so team can review/edit/send.
+		$this->ensure_conversation_itinerary( $conversation_id );
+		$name = trim( (string) ( $contact['name'] ?? '' ) );
+		$email = trim( (string) ( $contact['email'] ?? '' ) );
+		$phone = trim( (string) ( $contact['phone'] ?? '' ) );
+		$reqs = trim( (string) ( $contact['requirements'] ?? '' ) );
+		$messages = json_decode( (string) get_post_meta( $conversation_id, '_bmtg_messages', true ), true );
+		if ( ! is_array($messages) ) $messages = array();
+		$chat_lines = array();
+		foreach ( array_slice($messages, -60) as $m ) {
+			$role = strtoupper((string)($m['role'] ?? 'user'));
+			$content = trim( preg_replace('/\s+/', ' ', (string)($m['content'] ?? '')) );
+			if ($content === '' || $content === '[image]') continue;
+			$chat_lines[] = $role . ': ' . mb_substr($content, 0, 600);
+		}
+		$token = (string) get_post_meta( $conversation_id, '_bmtg_itinerary_token', true );
+		$urls = $token && class_exists('\\BMTG\\Integrations\\Itinerary') ? \BMTG\Integrations\Itinerary::admin_urls_for_token($token) : array();
+		$lines = array();
+		$lines[] = 'New BMTG chat lead — review & send itinerary.';
+		$lines[] = '';
+		if ( $name !== '' ) $lines[] = 'Client name: ' . $name;
+		if ( $email !== '' ) $lines[] = 'Client email: ' . $email;
+		if ( $phone !== '' ) $lines[] = 'Client phone: ' . $phone;
+		if ( $lead_id ) $lines[] = 'CRM Lead ID: ' . $lead_id;
+		$lines[] = 'Conversation ID: ' . $conversation_id;
+		if ( $reqs !== '' ) { $lines[] = ''; $lines[] = 'Requirements:'; $lines[] = $reqs; }
+		$lines[] = '';
+		if ( ! empty($urls['edit']) ) $lines[] = 'Review/edit itinerary (Word .doc download + send to client): ' . $urls['edit'];
+		if ( ! empty($urls['doc']) ) $lines[] = 'Download itinerary as Word (.doc, editable): ' . wp_nonce_url($urls['doc'], 'bmtg_itinerary_doc_' . $token);
+		if ( ! empty($urls['view']) ) $lines[] = 'View/print itinerary: ' . $urls['view'];
+		$lines[] = 'All chatbot conversations (admin): ' . admin_url('admin.php?page=bmtg-chatbot');
+		if ( $chat_lines ) {
+			$lines[] = '';
+			$lines[] = 'Chat transcript:';
+			$lines[] = implode("\n", $chat_lines);
+		}
+		$lines[] = '';
+		$lines[] = 'Submitted at: ' . gmdate( 'Y-m-d H:i:s' ) . ' UTC';
+		$subject = 'BMTG Lead & Itinerary for Review' . ( $name !== '' ? ': ' . $name : '' );
+		$headers = array( 'Content-Type: text/plain; charset=UTF-8' );
+		if ( $email !== '' && is_email( $email ) ) $headers[] = 'Reply-To: ' . $name . ' <' . $email . '>';
+		wp_mail( $to, $subject, implode( "\n", $lines ), $headers );
+	}
+
+	private function ensure_conversation_itinerary( int $conversation_id ): void {
+		$token = (string) get_post_meta( $conversation_id, '_bmtg_itinerary_token', true );
+		if ( $token && class_exists('\\BMTG\\Integrations\\Itinerary') && \BMTG\Integrations\Itinerary::get_doc_data($token) ) return;
+		$messages = json_decode( (string) get_post_meta( $conversation_id, '_bmtg_messages', true ), true );
+		if ( ! is_array($messages) ) $messages = array();
+		// Build request text from recent user messages and requirements
+		$parts = array();
+		$contact_raw = get_post_meta( $conversation_id, '_bmtg_contact', true );
+		$contact = json_decode((string)$contact_raw, true);
+		if ( is_array($contact) && ! empty($contact['requirements']) ) $parts[] = (string)$contact['requirements'];
+		foreach ( $messages as $m ) {
+			if ( ($m['role'] ?? '') === 'user' ) $parts[] = (string)($m['content'] ?? '');
+		}
+		$text = trim(implode(". ", array_slice($parts, -12)));
+		if ($text === '') $text = 'Bespoke journey in India, Nepal, Bhutan, Sri Lanka';
+		if ( ! preg_match('/\b(india|nepal|bhutan|sri lanka|taj|rajasthan|kerala|goa|himalaya|ladakh|kashmir|varanasi|delhi|jaipur|mumbai|kolkata|kathmandu|pokhara|colombo|kandy|galle|sigiriya|thimphu|paro|punakha)\b/i', $text) ) {
+			$text = 'Bespoke journey in India, Nepal, Bhutan, Sri Lanka. ' . $text;
+		}
+		if ( ! preg_match('/\b\d+\s*(day|days|night|nights)\b/i', $text) ) {
+			$text = '7 day bespoke journey. ' . $text;
+		}
+		try {
+			if ( class_exists('\\BMTG\\Integrations\\Itinerary') ) {
+				\BMTG\Integrations\Itinerary::generate_chat_pdf( $text, $conversation_id );
+			}
+		} catch ( \Throwable $e ) { /* best-effort */ }
 	}
 
 	public function rest_handover( \WP_REST_Request $req ): \WP_REST_Response {

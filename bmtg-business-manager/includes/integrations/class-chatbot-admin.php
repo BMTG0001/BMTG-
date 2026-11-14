@@ -15,6 +15,7 @@ class Chatbot_Admin {
 	public function register_hooks(): void {
 		add_action( 'admin_menu', array( $this, 'menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_post_bmtg_chatbot_view_conv', array( $this, 'handle_view_conv' ) );
 	}
 
 	public function menu(): void {
@@ -220,7 +221,145 @@ class Chatbot_Admin {
 
 				<?php submit_button(); ?>
 			</form>
+
+			<hr />
+			<?php $this->render_review_section(); ?>
 		</div>
 		<?php
+	}
+
+	private function render_review_section(): void {
+		if ( ! current_user_can( Activator::CAPABILITY ) ) return;
+		$msg = isset($_GET['bmtg_msg']) ? sanitize_text_field((string)$_GET['bmtg_msg']) : '';
+		if ($msg === 'sent') echo '<div class="notice notice-success"><p>Itinerary email sent to client.</p></div>';
+		if ($msg === 'send_failed') echo '<div class="notice notice-error"><p>Could not send itinerary email. Please check site mail (SMTP/wp_mail) configuration.</p></div>';
+		if ($msg === 'invalid_email') echo '<div class="notice notice-error"><p>Please provide a valid client email address.</p></div>';
+
+		echo '<h2>Lead Itinerary Review &amp; Send</h2>';
+		echo '<p>Review the AI-drafted itinerary and chat, edit content if needed, download an editable Word (.doc) file, and send the itinerary to the client by email. On each lead/details submission the draft and chat are emailed to <strong>travelintoindia@gmail.com</strong> for human review.</p>';
+
+		$token = isset($_GET['bmtg_it_token']) ? sanitize_text_field((string)$_GET['bmtg_it_token']) : '';
+		$conv_id = isset($_GET['conv']) ? (int) $_GET['conv'] : 0;
+		if ($conv_id && !$token) {
+			$t = (string) get_post_meta($conv_id, '_bmtg_itinerary_token', true);
+			if ($t) $token = $t;
+		}
+
+		if ($token && class_exists('\\BMTG\\Integrations\\Itinerary')) {
+			$doc = \BMTG\Integrations\Itinerary::get_doc_data($token);
+			if ($doc) {
+				$this->render_itinerary_editor($token, $doc);
+			} else {
+				echo '<div class="notice notice-warning inline"><p>This itinerary draft has expired or is unavailable. Open a recent conversation below or regenerate from chat.</p></div>';
+			}
+		}
+
+		echo '<h3>Recent Chat Leads &amp; Conversations</h3>';
+		$q = new \WP_Query(array(
+			'post_type' => Chatbot::CONVERSATION_CPT,
+			'post_status' => 'any',
+			'posts_per_page' => 20,
+			'orderby' => 'date',
+			'order' => 'DESC',
+			'meta_query' => array(
+				'relation' => 'OR',
+				array('key' => '_bmtg_contact', 'compare' => 'EXISTS'),
+				array('key' => '_bmtg_lead_id', 'compare' => 'EXISTS'),
+			),
+		));
+		if ( empty($q->posts) ) {
+			echo '<p>No chat leads yet.</p>';
+			return;
+		}
+		echo '<table class="widefat striped"><thead><tr><th>When</th><th>Name</th><th>Email</th><th>Phone</th><th>Conversation</th><th>Itinerary</th></tr></thead><tbody>';
+		foreach ($q->posts as $p) {
+			$cid = (int) $p->ID;
+			$contact = json_decode((string) get_post_meta($cid,'_bmtg_contact',true), true);
+			if (!is_array($contact)) $contact = array();
+			$name = esc_html((string)($contact['name'] ?? ''));
+			$email = esc_html((string)($contact['email'] ?? ''));
+			$phone = esc_html((string)($contact['phone'] ?? ''));
+			$when = esc_html(get_the_date('Y-m-d H:i', $p));
+			$t = (string) get_post_meta($cid,'_bmtg_itinerary_token',true);
+			$review = $t ? esc_url(admin_url('admin.php?page=bmtg-chatbot&bmtg_it_token=' . rawurlencode($t))) : '';
+			$conv_url = esc_url(admin_url('admin.php?page=bmtg-chatbot&conv=' . $cid));
+			echo '<tr><td>'.$when.'</td><td>'.$name.'</td><td>'.$email.'</td><td>'.$phone.'</td><td><a href="'.$conv_url.'">View chat</a> (#'.$cid.')</td><td>'.($review ? '<a class="button button-small" href="'.$review.'">Review / Edit / Send</a>' : '<em>Not generated</em>').'</td></tr>';
+		}
+		echo '</tbody></table>';
+
+		if ($conv_id) {
+			$this->render_conversation_view($conv_id);
+		}
+	}
+
+	private function render_itinerary_editor( string $token, array $doc ): void {
+		$st = is_array($doc['structured'] ?? null) ? $doc['structured'] : array();
+		$images = is_array($doc['images'] ?? null) ? $doc['images'] : array();
+		$cid = (int)($doc['cid'] ?? 0);
+		$contact = $cid ? json_decode((string)get_post_meta($cid,'_bmtg_contact',true), true) : array();
+		if (!is_array($contact)) $contact = array();
+		$client_email = (string)($contact['email'] ?? '');
+		$client_name = (string)($contact['name'] ?? '');
+		$e = function($v){ return esc_attr((string)$v); };
+		$et = function($v){ return esc_textarea((string)$v); };
+		$eh = function($v){ return esc_html((string)$v); };
+		$doc_url = wp_nonce_url(admin_url('admin-post.php?action=bmtg_itinerary_doc&doc=' . rawurlencode($token)), 'bmtg_itinerary_doc_' . $token);
+		$view_url = esc_url(admin_url('admin-post.php?action=bmtg_itinerary_pdf&doc=' . rawurlencode($token)));
+		echo '<div style="background:#fff;border:1px solid #ccd0d4;padding:16px;margin:16px 0">';
+		echo '<h3>Review &amp; Edit Draft Itinerary'.($client_name? ' — '.$eh($client_name):'').'</h3>';
+		echo '<p><a class="button" href="'.$view_url.'" target="_blank">View / Print</a> <a class="button" href="'.esc_url($doc_url).'">Download editable Word (.doc)</a></p>';
+		echo '<form method="post" action="'.esc_url(admin_url('admin-post.php')).'">';
+		echo '<input type="hidden" name="action" value="bmtg_itinerary_send_client">';
+		wp_nonce_field('bmtg_itinerary_send');
+		echo '<input type="hidden" name="doc" value="'.$e($token).'">';
+		echo '<table class="form-table" role="presentation">';
+		echo '<tr><th>Title</th><td><input type="text" class="regular-text" name="title" value="'.$e($st['title'] ?? '').'"></td></tr>';
+		echo '<tr><th>Subtitle / Route</th><td><input type="text" class="regular-text" name="subtitle" value="'.$e($st['subtitle'] ?? '').'"></td></tr>';
+		echo '<tr><th>Destinations</th><td><input type="text" class="regular-text" name="destinations" value="'.$e($st['destinations'] ?? '').'"></td></tr>';
+		echo '<tr><th>Overview</th><td><textarea name="overview" rows="4" class="large-text">'.$et($st['overview'] ?? '').'</textarea></td></tr>';
+		echo '<tr><th>Facts &amp; Highlights</th><td><p class="description">Label / Value pairs (leave blank rows unused).</p>';
+		$facts = is_array($st['facts'] ?? null) ? $st['facts'] : array();
+		for ($i=0; $i<max(6,count($facts)); $i++) { $f=$facts[$i]??array();
+			echo '<div style="display:flex;gap:8px;margin-bottom:6px"><input type="text" name="fact_label[]" value="'.$e($f['label']??'').'" placeholder="Label" style="width:35%"><input type="text" name="fact_value[]" value="'.$e($f['value']??'').'" placeholder="Value" style="width:60%"></div>'; }
+		echo '</td></tr>';
+		echo '<tr><th>Day-by-day plan</th><td>';
+		$days = is_array($st['days'] ?? null) ? $st['days'] : array();
+		for ($i=0; $i<max(7,count($days)); $i++) { $d=$days[$i]??array(); $n=$i+1;
+			echo '<div style="border:1px solid #e5e7eb;padding:10px;margin-bottom:8px"><strong>Day '.$n.'</strong><br><input type="text" name="day_title[]" value="'.$e($d['title']??'').'" placeholder="Day title" class="regular-text" style="margin:6px 0"><br><textarea name="day_body[]" rows="3" class="large-text" placeholder="Day details">'.$et($d['body']??'').'</textarea></div>'; }
+		echo '</td></tr>';
+		echo '<tr><th>Closing</th><td><textarea name="closing" rows="3" class="large-text">'.$et($st['closing'] ?? '').'</textarea></td></tr>';
+		echo '<tr><th>Notes</th><td><textarea name="notes" rows="3" class="large-text">'.$et($st['notes'] ?? '').'</textarea></td></tr>';
+		echo '</table>';
+		echo '<h4>Send to Client</h4>';
+		echo '<table class="form-table" role="presentation">';
+		echo '<tr><th>Client email</th><td><input type="email" class="regular-text" name="client_email" value="'.$e($client_email).'" required></td></tr>';
+		echo '<tr><th>Subject</th><td><input type="text" class="regular-text" name="subject" value="'.$e(($st['title']??'Your Itinerary').' — BM Travel Group').'"></td></tr>';
+		echo '<tr><th>Message</th><td><textarea name="message" rows="5" class="large-text">'.esc_textarea("Dear ".($client_name?:'Traveller').",\n\nPlease find your curated itinerary from BM Travel Group attached for your review. I would be happy to personalise any details for you.\n\nWarm regards,\nBM Travel Group").'</textarea></td></tr>';
+		echo '<tr><th>Attachment</th><td><label><input type="checkbox" name="attach_doc" value="1" checked> Attach editable Word itinerary (.doc)</label><p class="description">The current edited content above will be used for the attachment. Email is sent via your site mail (wp_mail/SMTP).</p></td></tr>';
+		echo '</table>';
+		echo '<p><button type="submit" class="button button-primary">Send itinerary to client</button></p>';
+		echo '</form></div>';
+	}
+
+	private function render_conversation_view( int $conv_id ): void {
+		$post = get_post($conv_id);
+		if (!$post || $post->post_type !== Chatbot::CONVERSATION_CPT) return;
+		$messages = json_decode((string)get_post_meta($conv_id,'_bmtg_messages',true), true);
+		if (!is_array($messages)) $messages = array();
+		$contact = json_decode((string)get_post_meta($conv_id,'_bmtg_contact',true), true);
+		if (!is_array($contact)) $contact = array();
+		echo '<h3>Chat transcript (#'.(int)$conv_id.')</h3>';
+		if ($contact) {
+			echo '<p><strong>Contact:</strong> '.esc_html(trim(($contact['name']??'').' '.($contact['email']??'').' '.($contact['phone']??''))).'</p>';
+			if (!empty($contact['requirements'])) echo '<p><strong>Requirements:</strong> '.nl2br(esc_html((string)$contact['requirements'])).'</p>';
+		}
+		echo '<div style="max-height:420px;overflow:auto;border:1px solid #e5e7eb;background:#fff;padding:12px">';
+		foreach ($messages as $m) {
+			$role = esc_html(strtoupper((string)($m['role']??'user')));
+			$content = (string)($m['content']??'');
+			echo '<p style="margin:0 0 8px"><strong>'.$role.':</strong> '.nl2br(esc_html($content)).'</p>';
+		}
+		if (!$messages) echo '<p><em>No messages.</em></p>';
+		echo '</div>';
 	}
 }
