@@ -20,7 +20,7 @@
 .bmtg-chat-launcher {
   position: fixed;
   right: 20px;
-  bottom: 20px;
+  bottom: 170px;
   z-index: 99999;
   width: 56px;
   height: 56px;
@@ -39,6 +39,7 @@
 }
 .bmtg-chat-launcher:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(11,20,26,0.22); }
 .bmtg-chat-launcher svg { width: 26px; height: 26px; fill: #fff; display: block; }
+.bmtg-chat-launcher img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; display: block; }
 .bmtg-chat-launcher .bmtg-launcher-label {
   position: absolute;
   right: 66px;
@@ -59,10 +60,10 @@
 .bmtg-chat-panel {
   position: fixed;
   right: 20px;
-  bottom: 88px;
+  bottom: 238px;
   width: 400px;
   max-width: calc(100vw - 24px);
-  height: min(680px, calc(100vh - 100px));
+  height: min(560px, calc(100vh - 260px));
   background: var(--bmtg-chat-bg);
   color: var(--bmtg-text);
   border-radius: 12px;
@@ -132,7 +133,19 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  position: relative;
 }
+.bmtg-watermark {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.055;
+  background-repeat: repeat;
+  background-position: center;
+  background-size: 120px auto;
+  z-index: 0;
+}
+.bmtg-msg, .bmtg-typing, .bmtg-quick-wrap { position: relative; z-index: 1; }
 
 .bmtg-msg {
   margin: 1px 0;
@@ -284,13 +297,16 @@
   cursor: pointer;
   flex: 0 0 40px;
   transition: background 0.15s;
+  padding: 0;
+  overflow: hidden;
 }
 .bmtg-icon-btn:hover { background: var(--bmtg-header); }
 .bmtg-icon-btn svg { width: 18px; height: 18px; fill: #fff; }
+.bmtg-icon-btn img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; display: block; }
 
 @media (max-width: 480px) {
   .bmtg-chat-panel { right: 0; left: 0; bottom: 0; top: 0; width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; border: none; }
-  .bmtg-chat-launcher { right: 16px; bottom: 16px; }
+  .bmtg-chat-launcher { right: 16px; bottom: 170px; }
   .bmtg-chat-launcher .bmtg-launcher-label { display: none; }
   .bmtg-msg { max-width: 88%; }
 }

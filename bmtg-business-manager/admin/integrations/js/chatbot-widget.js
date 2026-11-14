@@ -78,6 +78,7 @@
     header.appendChild(avatar); header.appendChild(htext); header.appendChild(closeBtn);
 
     const msgs=el('div','bmtg-chat-messages'); msgs.setAttribute('aria-live','polite');
+    if(UI.iconUrl){ const wm=el('div','bmtg-watermark'); wm.style.backgroundImage='url("'+String(UI.iconUrl).replace(/"/g,'\\"')+'")'; msgs.appendChild(wm); }
     const typing=el('div','bmtg-typing'); typing.style.display='none';
     const tb=el('div','bmtg-typing-bubble'); tb.appendChild(el('span','bmtg-dot')); tb.appendChild(el('span','bmtg-dot')); tb.appendChild(el('span','bmtg-dot')); typing.appendChild(tb);
 
@@ -94,7 +95,9 @@
 
     const inputWrap=el('div','bmtg-chat-input');
     const ta=document.createElement('textarea'); ta.rows=1; ta.placeholder='Type a message'; ta.setAttribute('aria-label','Message');
-    const send=el('button','bmtg-icon-btn'); send.type='button'; send.setAttribute('aria-label','Send'); send.appendChild(svg(ICONS.send));
+    const send=el('button','bmtg-icon-btn bmtg-send-btn'); send.type='button'; send.setAttribute('aria-label','Send');
+    if(UI.iconUrl){ const sim=document.createElement('img'); sim.src=UI.iconUrl; sim.alt='Send'; sim.className='bmtg-send-logo'; send.appendChild(sim); }
+    else { send.appendChild(svg(ICONS.send)); }
     inputWrap.appendChild(ta); inputWrap.appendChild(send);
 
     panel.appendChild(header); panel.appendChild(msgs); panel.appendChild(typing); panel.appendChild(quickWrap); panel.appendChild(leadForm); panel.appendChild(inputWrap);
