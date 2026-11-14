@@ -52,6 +52,9 @@ class Hub {
 		if ( ! defined( 'BMTG_CHATBOT_DISABLE' ) ) {
 			$chatbot = new Chatbot( $this );
 			$chatbot->register_hooks();
+			if ( is_admin() ) {
+				( new Chatbot_Admin( $chatbot ) )->register_hooks();
+			}
 		}
 
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
