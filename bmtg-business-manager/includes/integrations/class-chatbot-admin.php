@@ -108,6 +108,7 @@ class Chatbot_Admin {
 		$out['ui_header_title'] = sanitize_text_field( $input['ui_header_title'] ?? $defaults['ui_header_title'] );
 		$out['ui_header_tagline'] = sanitize_text_field( $input['ui_header_tagline'] ?? $defaults['ui_header_tagline'] );
 		$out['ui_launcher_label'] = sanitize_text_field( $input['ui_launcher_label'] ?? $defaults['ui_launcher_label'] );
+		$out['ui_launcher_bottom'] = $this->sanitize_size( $input['ui_launcher_bottom'] ?? $defaults['ui_launcher_bottom'], $defaults['ui_launcher_bottom'], 0, 400 );
 		$out['ui_icon_url'] = esc_url_raw( $input['ui_icon_url'] ?? '' );
 		$ff = sanitize_text_field( $input['ui_font_family'] ?? $defaults['ui_font_family'] );
 		$out['ui_font_family'] = $ff !== '' ? $ff : 'inherit';
@@ -176,6 +177,7 @@ class Chatbot_Admin {
 					<tr><th scope="row">Header title (headline)</th><td><input type="text" class="regular-text" name="<?php echo esc_attr($opt); ?>[ui_header_title]" value="<?php echo esc_attr($s['ui_header_title']); ?>"></td></tr>
 					<tr><th scope="row">Header tagline</th><td><input type="text" class="regular-text" name="<?php echo esc_attr($opt); ?>[ui_header_tagline]" value="<?php echo esc_attr($s['ui_header_tagline']); ?>"></td></tr>
 					<tr><th scope="row">Launcher label</th><td><input type="text" class="regular-text" name="<?php echo esc_attr($opt); ?>[ui_launcher_label]" value="<?php echo esc_attr($s['ui_launcher_label']); ?>"></td></tr>
+					<tr><th scope="row">Launcher bottom offset (px)</th><td><input type="number" step="1" min="0" max="400" name="<?php echo esc_attr($opt); ?>[ui_launcher_bottom]" value="<?php echo esc_attr($s['ui_launcher_bottom'] ?? '90'); ?>"><p class="description">Distance from bottom of screen. Increase to move the chat icon higher (e.g. to avoid overlapping other buttons). Default 90.</p></td></tr>
 					<tr><th scope="row">Icon image URL</th><td><input type="url" class="regular-text" name="<?php echo esc_attr($opt); ?>[ui_icon_url]" value="<?php echo esc_attr($s['ui_icon_url']); ?>" placeholder="https://..."><p class="description">Optional avatar/icon image shown in chat header. Leave blank for default icon.</p></td></tr>
 					<tr><th scope="row">Font family</th><td><input type="text" class="regular-text" name="<?php echo esc_attr($opt); ?>[ui_font_family]" value="<?php echo esc_attr($s['ui_font_family']); ?>" placeholder="inherit"><p class="description">Use <code>inherit</code> to follow the Kadence/site theme font.</p></td></tr>
 					<tr><th scope="row">Base font size (px)</th><td><input type="number" step="0.5" min="12" max="22" name="<?php echo esc_attr($opt); ?>[ui_font_size]" value="<?php echo esc_attr($s['ui_font_size']); ?>"></td></tr>

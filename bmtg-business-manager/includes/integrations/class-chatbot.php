@@ -84,6 +84,7 @@ class Chatbot {
 			'ui_header_title'      => 'BM Travel Group Chat',
 			'ui_header_tagline'    => '',
 			'ui_launcher_label'    => 'Chat with us',
+			'ui_launcher_bottom'   => '90',
 			'ui_icon_url'          => '',
 			'ui_font_family'       => 'inherit',
 			'ui_font_size'         => '14.5',
@@ -167,6 +168,7 @@ class Chatbot {
 			'headerTitle'    => $s['ui_header_title'] ?? 'BM Travel Group',
 			'headerTagline'  => $s['ui_header_tagline'] ?? 'Concierge · bmtravelgroup.com',
 			'launcherLabel'  => $s['ui_launcher_label'] ?? 'Chat with us',
+			'launcherBottom' => $s['ui_launcher_bottom'] ?? '90',
 			'iconUrl'        => $s['ui_icon_url'] ?? '',
 			'fontFamily'     => $s['ui_font_family'] ?? 'inherit',
 			'fontSize'       => $s['ui_font_size'] ?? '14.5',
@@ -225,6 +227,13 @@ class Chatbot {
 		$css .= '.bmtg-msg.assistant,.bmtg-msg.user{background:var(--bmtg-in,#fff);color:var(--bmtg-text,#111b21);}';
 		$css .= '.bmtg-msg .bmtg-ticks{color:var(--bmtg-tick,#53bdeb);}';
 		$css .= '.bmtg-chat-input,.bmtg-quick-wrap{background:var(--bmtg-surface,#f0f2f5);}';
+		$lb = isset( $ui['launcherBottom'] ) ? (int) $ui['launcherBottom'] : 90;
+		if ( $lb < 0 ) $lb = 0; if ( $lb > 400 ) $lb = 400;
+		$panel_bottom = $lb + 68;
+		$panel_height = max( 300, 1000 - $panel_bottom - 22 );
+		$css .= '.bmtg-chat-launcher{bottom:' . $lb . 'px !important;}';
+		$css .= '.bmtg-chat-panel{bottom:' . $panel_bottom . 'px !important;height:min(620px,calc(100vh - ' . ($panel_bottom + 22) . 'px)) !important;}';
+		$css .= '@media (max-width:480px){.bmtg-chat-launcher{bottom:' . $lb . 'px !important;}.bmtg-chat-panel{bottom:0 !important;height:100dvh !important;}}';
 		if ( ! empty( $ui['iconUrl'] ) ) {
 			$icon = esc_url_raw( (string) $ui['iconUrl'] );
 			$css .= '.bmtg-chat-messages{--bmtg-watermark:url("' . $icon . '");}';

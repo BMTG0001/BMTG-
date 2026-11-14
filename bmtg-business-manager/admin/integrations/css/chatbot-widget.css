@@ -20,7 +20,7 @@
 .bmtg-chat-launcher {
   position: fixed;
   right: 20px;
-  bottom: 170px;
+  bottom: 90px;
   z-index: 99999;
   width: 56px;
   height: 56px;
@@ -60,10 +60,10 @@
 .bmtg-chat-panel {
   position: fixed;
   right: 20px;
-  bottom: 238px;
+  bottom: 158px;
   width: 400px;
   max-width: calc(100vw - 24px);
-  height: min(560px, calc(100vh - 260px));
+  height: min(620px, calc(100vh - 180px));
   background: var(--bmtg-chat-bg);
   color: var(--bmtg-text);
   border-radius: 12px;
@@ -306,7 +306,7 @@
 
 @media (max-width: 480px) {
   .bmtg-chat-panel { right: 0; left: 0; bottom: 0; top: 0; width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; border: none; }
-  .bmtg-chat-launcher { right: 16px; bottom: 170px; }
+  .bmtg-chat-launcher { right: 16px; bottom: 90px; }
   .bmtg-chat-launcher .bmtg-launcher-label { display: none; }
   .bmtg-msg { max-width: 88%; }
 }
