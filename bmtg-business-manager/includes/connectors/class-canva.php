@@ -32,11 +32,13 @@ class Canva extends Abstract_Connector {
 	}
 
 	public function scopes(): array {
-		// Baseline scopes for design creation/read; verify before production as per blueprint open items.
+		// Baseline scopes for design creation/read + brand template access for itinerary templates.
 		return array(
 			'design:content:read',
 			'design:content:write',
 			'design:meta:read',
+			'brandtemplate:meta:read',
+			'brandtemplate:content:read',
 			'profile:read',
 		);
 	}

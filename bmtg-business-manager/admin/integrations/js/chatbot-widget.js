@@ -1,5 +1,12 @@
 (function(){
   if (typeof BMTGChatbot === 'undefined') return;
+  const UI = Object.assign({
+    headerBg:'#075e54', headerAccent:'#128c7e', chatBg:'#ece5dd', incomingBg:'#ffffff', outgoingBg:'#d9fdd3',
+    accent:'#25d366', textColor:'#111b21', mutedColor:'#667781', tickColor:'#53bdeb', surfaceBg:'#f0f2f5',
+    headerTitle:'BM Travel Group', headerTagline:'Concierge · bmtravelgroup.com', launcherLabel:'Chat with us', iconUrl:'',
+    fontFamily:'inherit', fontSize:'14.5', headlineSize:'15', taglineSize:'12', timestampSize:'11',
+    buttonBg:'#128c7e', buttonText:'#ffffff', buttonFontSize:'13', buttonRadius:'18'
+  }, BMTGChatbot.ui || {});
   function el(tag,cls,text){const e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e;}
   function svg(pathD, viewBox){const s=document.createElementNS('http://www.w3.org/2000/svg','svg'); s.setAttribute('viewBox', viewBox||'0 0 24 24'); s.setAttribute('aria-hidden','true'); const p=document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d',pathD); s.appendChild(p); return s;}
   const ICONS={
@@ -41,16 +48,33 @@
     if(/^(ok|okay|k|hmm|hm|idk|dunno|na|nope|yep|ya|hi|hello|hey|test|asd+|qwerty)$/i.test(words)) return true;
     return false;
   }
+  function applyUiVars(node){
+    if(!node || !node.style) return;
+    const map = {
+      '--bmtg-header':UI.headerBg,'--bmtg-header-accent':UI.headerAccent,'--bmtg-chat-bg':UI.chatBg,
+      '--bmtg-in':UI.incomingBg,'--bmtg-out':UI.outgoingBg,'--bmtg-accent':UI.accent,
+      '--bmtg-text':UI.textColor,'--bmtg-muted':UI.mutedColor,'--bmtg-tick':UI.tickColor,'--bmtg-surface':UI.surfaceBg,
+      '--bmtg-font-family':UI.fontFamily||'inherit','--bmtg-font-size':UI.fontSize+'px','--bmtg-headline-size':UI.headlineSize+'px',
+      '--bmtg-tagline-size':UI.taglineSize+'px','--bmtg-timestamp-size':UI.timestampSize+'px',
+      '--bmtg-button-bg':UI.buttonBg,'--bmtg-button-text':UI.buttonText,'--bmtg-button-font-size':UI.buttonFontSize+'px','--bmtg-button-radius':UI.buttonRadius+'px'
+    };
+    for(const k in map) node.style.setProperty(k, map[k]);
+  }
   function init(mount){
     if(!mount || mount.__bmtgInit) return; mount.__bmtgInit=true;
     const launcher=el('button','bmtg-chat-launcher'); launcher.type='button'; launcher.setAttribute('aria-label','Open chat');
-    launcher.appendChild(svg(ICONS.chat));
-    launcher.appendChild(el('span','bmtg-launcher-label','Chat with us'));
+    if(UI.iconUrl){ const li=document.createElement('img'); li.src=UI.iconUrl; li.alt=''; li.style.width='26px'; li.style.height='26px'; li.style.borderRadius='50%'; li.style.objectFit='cover'; launcher.appendChild(li); }
+    else { launcher.appendChild(svg(ICONS.chat)); }
+    launcher.appendChild(el('span','bmtg-launcher-label', UI.launcherLabel || 'Chat with us'));
 
-    const panel=el('div','bmtg-chat-panel'); panel.setAttribute('role','dialog'); panel.setAttribute('aria-label','BM Travel Group concierge');
+    const panel=el('div','bmtg-chat-panel'); panel.setAttribute('role','dialog'); panel.setAttribute('aria-label', UI.headerTitle || 'BM Travel Group');
     const header=el('div','bmtg-chat-header');
-    const avatar=el('div','bmtg-avatar'); avatar.appendChild(svg(ICONS.user));
-    const htext=el('div','bmtg-htext'); htext.innerHTML='<div class="bmtg-title">BM Travel Group</div><div class="bmtg-sub">Concierge · bmtravelgroup.com</div>';
+    const avatar=el('div','bmtg-avatar');
+    if(UI.iconUrl){ const im=document.createElement('img'); im.src=UI.iconUrl; im.alt=''; im.style.width='100%'; im.style.height='100%'; im.style.borderRadius='50%'; im.style.objectFit='cover'; avatar.appendChild(im); }
+    else { avatar.appendChild(svg(ICONS.user)); }
+    const htext=el('div','bmtg-htext'); htext.innerHTML='<div class="bmtg-title"></div><div class="bmtg-sub"></div>';
+    htext.querySelector('.bmtg-title').textContent = UI.headerTitle || 'BM Travel Group';
+    htext.querySelector('.bmtg-sub').textContent = UI.headerTagline || 'Concierge · bmtravelgroup.com';
     const closeBtn=el('button','bmtg-close'); closeBtn.type='button'; closeBtn.setAttribute('aria-label','Close chat'); closeBtn.appendChild(svg(ICONS.close));
     header.appendChild(avatar); header.appendChild(htext); header.appendChild(closeBtn);
 
@@ -84,6 +108,7 @@
 
     panel.appendChild(header); panel.appendChild(msgs); panel.appendChild(typing); panel.appendChild(nudge); panel.appendChild(actions); panel.appendChild(leadForm); panel.appendChild(inputWrap);
     document.body.appendChild(launcher); document.body.appendChild(panel);
+    applyUiVars(launcher); applyUiVars(panel);
 
     let session=null, busy=false, unclearCount=0, nudgeShown=false;
 
@@ -142,6 +167,7 @@
         const replyText = d.reply || '';
         if(replyText || d.image) addMsg('assistant', replyText, d.image||null);
         if(d.notice) addMsg('assistant', d.notice);
+        if(d.canva && d.canva.url && !/canva/i.test(replyText)){ addMsg('assistant', '**Canva itinerary design:** '+d.canva.url); }
         const fallbackHint = /unable to|connect you with our team|couldn.?t get that/i.test(replyText);
         if(fallbackHint || unclearCount >= 2) showNudge();
       } catch(e){

@@ -20,6 +20,10 @@ class Itinerary {
 			'methods' => 'POST', 'permission_callback' => function(){ return current_user_can( \BMTG\CRM\Capabilities::MANAGE_LEADS ) || current_user_can('manage_options'); },
 			'callback' => array( __CLASS__, 'canva_create' ),
 		) );
+		register_rest_route( 'bmtg/v1/itinerary', '/canva/templates', array(
+			'methods' => 'GET', 'permission_callback' => function(){ return current_user_can( \BMTG\CRM\Capabilities::MANAGE_LEADS ) || current_user_can('manage_options'); },
+			'callback' => array( __CLASS__, 'canva_templates' ),
+		) );
 	}
 
 	public static function draft( \WP_REST_Request $req ): \WP_REST_Response {
@@ -41,15 +45,75 @@ class Itinerary {
 		return new \WP_REST_Response(array('title'=>$title,'destinations'=>$dest,'body'=>$text,'html'=>$html,'pdf_url'=>$url), 200);
 	}
 
+	public static function canva_templates( \WP_REST_Request $req ): \WP_REST_Response {
+		$query = sanitize_text_field( (string) $req->get_param('query') );
+		try {
+			$client = Manager::client('canva','live');
+			$res = $client->canva_list_brand_templates( $query, 20 );
+			if ( ($res['status'] ?? 0) >= 200 && ($res['status'] ?? 0) < 300 ) {
+				$items = $res['body']['items'] ?? array();
+				$out = array();
+				foreach ( $items as $it ) {
+					if ( ! is_array($it) ) continue;
+					$out[] = array(
+						'id' => $it['id'] ?? '',
+						'title' => $it['title'] ?? ($it['name'] ?? ''),
+						'thumbnail' => $it['thumbnail']['url'] ?? ($it['thumbnail_url'] ?? ''),
+						'view_url' => $it['view_url'] ?? '',
+						'create_url' => $it['create_url'] ?? '',
+					);
+				}
+				return new \WP_REST_Response( array( 'ok' => true, 'templates' => $out, 'continuation' => $res['body']['continuation'] ?? null ), 200 );
+			}
+			return new \WP_REST_Response( array( 'ok' => false, 'error' => $res['error'] ?? 'Unable to fetch templates', 'status' => $res['status'] ?? 0 ), 200 );
+		} catch ( \Throwable $e ) {
+			return new \WP_REST_Response(array('ok'=>false,'error'=>$e->getMessage()), 200);
+		}
+	}
+
 	public static function canva_create( \WP_REST_Request $req ): \WP_REST_Response {
 		$data = $req->get_json_params(); if(!is_array($data)) $data = $req->get_params();
 		$title = sanitize_text_field( $data['title'] ?? 'BMTG Itinerary' );
+		$template_id = sanitize_text_field( $data['template_id'] ?? '' );
+		$result = self::create_canva_itinerary( $title, sanitize_textarea_field( $data['notes'] ?? '' ), $template_id );
+		return new \WP_REST_Response( $result, 200 );
+	}
+
+	public static function create_canva_itinerary( string $title, string $notes = '', string $template_id = '' ): array {
+		$s = get_option('bmtg_chatbot_settings', array());
+		if ( $template_id === '' ) $template_id = (string) ($s['canva_itinerary_template_id'] ?? '');
+		$design_type = sanitize_text_field( $s['canva_itinerary_design_type'] ?? 'doc' ) ?: 'doc';
 		try {
 			$client = Manager::client('canva','live');
-			$res = $client->create_design(array('design_type'=>array('type'=>'preset','name'=>'doc')));
-			return new \WP_REST_Response(array('ok'=>($res['status']??0)>=200 && ($res['status']??0)<300,'result'=>$res['body'] ?? $res), 200);
-		} catch (\Throwable $e) {
-			return new \WP_REST_Response(array('ok'=>false,'error'=>$e->getMessage()), 400);
+			// Try brand template autofill first if template provided (best for "from template")
+			if ( $template_id !== '' ) {
+				$res = $client->canva_create_autofill( $template_id, array(), $title );
+				$body = $res['body'] ?? array();
+				$job = $body['job'] ?? $body;
+				if ( ($res['status'] ?? 0) >= 200 && ($res['status'] ?? 0) < 300 ) {
+					$design = $job['result']['design'] ?? ($job['design'] ?? null);
+					$url = $design['urls']['edit_url'] ?? ($design['urls']['view_url'] ?? ($job['url'] ?? ($body['url'] ?? '')));
+					if ( $url ) {
+						return array( 'ok' => true, 'url' => $url, 'mode' => 'template_autofill', 'result' => $body );
+					}
+					// job may be in progress; return job info
+					$job_id = $job['id'] ?? null;
+					if ( $job_id ) {
+						return array( 'ok' => true, 'job_id' => $job_id, 'mode' => 'template_autofill_pending', 'result' => $body, 'notice' => 'Canva itinerary design is being created from the template.' );
+					}
+				}
+				// fall through to blank design
+			}
+			$res = $client->create_design(array('design_type'=>array('type'=>'preset','name'=>$design_type), 'title'=>$title));
+			$body = $res['body'] ?? array();
+			if ( ($res['status'] ?? 0) >= 200 && ($res['status'] ?? 0) < 300 ) {
+				$design = $body['design'] ?? $body;
+				$url = $design['urls']['edit_url'] ?? ($design['urls']['view_url'] ?? ($design['url'] ?? ''));
+				return array( 'ok' => true, 'url' => $url, 'mode' => $template_id ? 'fallback_design' : 'design', 'result' => $body );
+			}
+			return array( 'ok' => false, 'error' => $res['error'] ?? ($body['message'] ?? 'Canva request failed'), 'status' => $res['status'] ?? 0 );
+		} catch ( \Throwable $e ) {
+			return array( 'ok' => false, 'error' => $e->getMessage() );
 		}
 	}
 

@@ -63,6 +63,34 @@ class Chatbot {
 			'logo_url'             => '',
 			'contact_email'        => '',
 			'contact_phone'        => '',
+			// Appearance / layout
+			'ui_header_bg'         => '#075e54',
+			'ui_header_accent'     => '#128c7e',
+			'ui_chat_bg'           => '#ece5dd',
+			'ui_incoming_bg'       => '#ffffff',
+			'ui_outgoing_bg'       => '#d9fdd3',
+			'ui_accent'            => '#25d366',
+			'ui_text_color'        => '#111b21',
+			'ui_muted_color'       => '#667781',
+			'ui_tick_color'        => '#53bdeb',
+			'ui_surface_bg'        => '#f0f2f5',
+			'ui_header_title'      => 'BM Travel Group',
+			'ui_header_tagline'    => 'Concierge · bmtravelgroup.com',
+			'ui_launcher_label'    => 'Chat with us',
+			'ui_icon_url'          => '',
+			'ui_font_family'       => 'inherit',
+			'ui_font_size'         => '14.5',
+			'ui_headline_size'     => '15',
+			'ui_tagline_size'      => '12',
+			'ui_timestamp_size'    => '11',
+			'ui_button_bg'         => '#128c7e',
+			'ui_button_text'       => '#ffffff',
+			'ui_button_font_size'  => '13',
+			'ui_button_radius'     => '18',
+			// Canva itinerary
+			'canva_itinerary_enabled'      => false,
+			'canva_itinerary_template_id'  => '',
+			'canva_itinerary_design_type'  => 'doc',
 		);
 	}
 
@@ -97,6 +125,11 @@ class Chatbot {
 		if ( $wa_num !== '' ) {
 			$wa_url = 'https://wa.me/' . rawurlencode( $wa_num ) . '?text=' . rawurlencode( (string) ( $s['whatsapp_prefill'] ?? 'Hello BM Travel Group, I would like assistance planning a journey.' ) );
 		}
+		$ui = $this->ui_settings( $s );
+		$inline = $this->ui_inline_css( $ui );
+		if ( $inline ) {
+			wp_add_inline_style( 'bmtg-chatbot-widget', $inline );
+		}
 		wp_localize_script( 'bmtg-chatbot-widget', 'BMTGChatbot', array(
 			'restUrl'          => esc_url_raw( rest_url( 'bmtg/v1/chatbot' ) ),
 			'nonce'            => wp_create_nonce( 'wp_rest' ),
@@ -106,7 +139,81 @@ class Chatbot {
 			'requireConsent'   => ! empty( $s['require_consent'] ),
 			'whatsappUrl'      => $wa_url,
 			'whatsappLabel'    => 'Continue on WhatsApp',
+			'ui'               => $ui,
+			'canvaItinerary'   => ! empty( $s['canva_itinerary_enabled'] ),
 		) );
+	}
+
+	public function ui_settings( array $s ): array {
+		return array(
+			'headerBg'       => $s['ui_header_bg'] ?? '#075e54',
+			'headerAccent'   => $s['ui_header_accent'] ?? '#128c7e',
+			'chatBg'         => $s['ui_chat_bg'] ?? '#ece5dd',
+			'incomingBg'     => $s['ui_incoming_bg'] ?? '#ffffff',
+			'outgoingBg'     => $s['ui_outgoing_bg'] ?? '#d9fdd3',
+			'accent'         => $s['ui_accent'] ?? '#25d366',
+			'textColor'      => $s['ui_text_color'] ?? '#111b21',
+			'mutedColor'     => $s['ui_muted_color'] ?? '#667781',
+			'tickColor'      => $s['ui_tick_color'] ?? '#53bdeb',
+			'surfaceBg'      => $s['ui_surface_bg'] ?? '#f0f2f5',
+			'headerTitle'    => $s['ui_header_title'] ?? 'BM Travel Group',
+			'headerTagline'  => $s['ui_header_tagline'] ?? 'Concierge · bmtravelgroup.com',
+			'launcherLabel'  => $s['ui_launcher_label'] ?? 'Chat with us',
+			'iconUrl'        => $s['ui_icon_url'] ?? '',
+			'fontFamily'     => $s['ui_font_family'] ?? 'inherit',
+			'fontSize'       => $s['ui_font_size'] ?? '14.5',
+			'headlineSize'   => $s['ui_headline_size'] ?? '15',
+			'taglineSize'    => $s['ui_tagline_size'] ?? '12',
+			'timestampSize'  => $s['ui_timestamp_size'] ?? '11',
+			'buttonBg'       => $s['ui_button_bg'] ?? '#128c7e',
+			'buttonText'     => $s['ui_button_text'] ?? '#ffffff',
+			'buttonFontSize' => $s['ui_button_font_size'] ?? '13',
+			'buttonRadius'   => $s['ui_button_radius'] ?? '18',
+		);
+	}
+
+	private function ui_inline_css( array $ui ): string {
+		$font = $ui['fontFamily'] === 'inherit' ? 'inherit' : $ui['fontFamily'];
+		$vars = array(
+			'--bmtg-header'         => $ui['headerBg'],
+			'--bmtg-header-accent'  => $ui['headerAccent'],
+			'--bmtg-chat-bg'        => $ui['chatBg'],
+			'--bmtg-in'             => $ui['incomingBg'],
+			'--bmtg-out'            => $ui['outgoingBg'],
+			'--bmtg-accent'         => $ui['accent'],
+			'--bmtg-text'           => $ui['textColor'],
+			'--bmtg-muted'          => $ui['mutedColor'],
+			'--bmtg-tick'           => $ui['tickColor'],
+			'--bmtg-surface'        => $ui['surfaceBg'],
+			'--bmtg-font-family'    => $font,
+			'--bmtg-font-size'      => $ui['fontSize'] . 'px',
+			'--bmtg-headline-size'  => $ui['headlineSize'] . 'px',
+			'--bmtg-tagline-size'   => $ui['taglineSize'] . 'px',
+			'--bmtg-timestamp-size' => $ui['timestampSize'] . 'px',
+			'--bmtg-button-bg'      => $ui['buttonBg'],
+			'--bmtg-button-text'    => $ui['buttonText'],
+			'--bmtg-button-font-size'=> $ui['buttonFontSize'] . 'px',
+			'--bmtg-button-radius'  => $ui['buttonRadius'] . 'px',
+		);
+		$decl = '';
+		foreach ( $vars as $k => $v ) {
+			$decl .= $k . ':' . $v . ';';
+		}
+		$css = '.bmtg-chat-launcher,.bmtg-chat-panel{' . $decl . '}';
+		$css .= '.bmtg-chat-panel{font-family:var(--bmtg-font-family,inherit);font-size:var(--bmtg-font-size,14.5px);}';
+		$css .= '.bmtg-chat-launcher{font-family:var(--bmtg-font-family,inherit);}';
+		$css .= '.bmtg-chat-header .bmtg-title{font-size:var(--bmtg-headline-size,15px);}';
+		$css .= '.bmtg-chat-header .bmtg-sub{font-size:var(--bmtg-tagline-size,12px);}';
+		$css .= '.bmtg-msg .bmtg-meta{font-size:var(--bmtg-timestamp-size,11px);}';
+		$css .= '.bmtg-icon-btn,.bmtg-lead-form .bmtg-submit,.bmtg-nudge-btn.primary{background:var(--bmtg-button-bg,#128c7e);color:var(--bmtg-button-text,#fff);font-size:var(--bmtg-button-font-size,13px);border-radius:var(--bmtg-button-radius,18px);}';
+		$css .= '.bmtg-icon-btn{border-radius:50%;}';
+		$css .= '.bmtg-chat-header{background:var(--bmtg-header,#075e54);}';
+		$css .= '.bmtg-chat-messages{background-color:var(--bmtg-chat-bg,#ece5dd);}';
+		$css .= '.bmtg-msg.assistant{background:var(--bmtg-in,#fff);}';
+		$css .= '.bmtg-msg.user{background:var(--bmtg-out,#d9fdd3);}';
+		$css .= '.bmtg-msg .bmtg-ticks{color:var(--bmtg-tick,#53bdeb);}';
+		$css .= '.bmtg-chat-actions,.bmtg-chat-input{background:var(--bmtg-surface,#f0f2f5);}';
+		return $css;
 	}
 
 	public function shortcode( $atts = array() ): string {
@@ -237,6 +344,16 @@ class Chatbot {
 				$reply = trim( $reply . "\n\n" . $note );
 			}
 		}
+		$extra = array();
+		$canva = $this->maybe_create_canva_itinerary( $text, $reply, $messages );
+		if ( $canva ) {
+			if ( ! empty( $canva['url'] ) ) {
+				$reply = trim( $reply . "\n\n**Itinerary design (Canva):** " . $canva['url'] . "\nWould you like me to adjust the destinations or duration?" );
+			} elseif ( ! empty( $canva['notice'] ) ) {
+				$reply = trim( $reply . "\n\n" . $canva['notice'] );
+			}
+			$extra['canva'] = $canva;
+		}
 		$messages[] = array( 'role' => 'assistant', 'content' => $reply, 'at' => gmdate( 'c' ) );
 		if ( $image ) {
 			$messages[] = array( 'role' => 'assistant', 'content' => '[image]', 'at' => gmdate( 'c' ), 'image' => $image );
@@ -244,7 +361,29 @@ class Chatbot {
 		}
 		update_post_meta( $post->ID, '_bmtg_messages', wp_json_encode( $messages ) );
 		$this->dispatch_inbox_event( $post->ID, 'message', array( 'role' => 'assistant', 'content' => $reply ) );
-		return $this->private_response( array( 'reply' => $reply, 'status' => 'ai', 'image' => $image ) );
+		$out = array( 'reply' => $reply, 'status' => 'ai', 'image' => $image );
+		if ( $canva ) $out['canva'] = $canva;
+		return $this->private_response( $out );
+	}
+
+	private function maybe_create_canva_itinerary( string $user_text, string $reply, array $messages ): ?array {
+		$s = $this->settings();
+		if ( empty( $s['canva_itinerary_enabled'] ) ) return null;
+		$t = mb_strtolower( $user_text . ' ' . $reply );
+		$wants = preg_match('/\b(itinerary|day\s*by\s*day|day-by-day|travel plan|trip plan|plan my|create.*plan|draft.*itinerary)\b/u', $t);
+		if ( ! $wants ) return null;
+		// require some destination/context or explicit ask; avoid firing on very short ambiguous text
+		if ( mb_strlen( trim( $user_text ) ) < 8 ) return null;
+		try {
+			if ( class_exists( '\\BMTG\\Integrations\\Itinerary' ) ) {
+				$title = 'BM Travel Group Journey';
+				if ( preg_match('/\b(india|nepal|bhutan|sri lanka|taj|rajasthan|kerala|himalaya|kathmandu|colombo)\b/i', $user_text, $m) ) {
+					$title = 'BM Travel Group - ' . ucwords(strtolower($m[1])) . ' Journey';
+				}
+				return \BMTG\Integrations\Itinerary::create_canva_itinerary( $title, $user_text, $s['canva_itinerary_template_id'] ?? '' );
+			}
+		} catch ( \Throwable $e ) { return array( 'ok' => false, 'notice' => 'I can prepare the itinerary details here. Canva design is not available right now.' ); }
+		return null;
 	}
 
 	private function user_wants_image( string $text ): bool {

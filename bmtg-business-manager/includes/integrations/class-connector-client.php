@@ -111,4 +111,32 @@ class Connector_Client {
 		$url = 'https://api.canva.com/rest/v1' . $path;
 		return $this->request( $method, $url, $args );
 	}
+
+	/** Canva: list brand templates (requires brandtemplate:meta:read scope). */
+	public function canva_list_brand_templates( string $query = '', int $limit = 20, string $continuation = '' ): array {
+		if ( $this->connector->id() !== 'canva' ) throw new Misconfigured_Exception( 'Not a Canva client.' );
+		$args = array( 'limit' => max(1, min(50, $limit)) );
+		if ( $query !== '' ) $args['query'] = $query;
+		if ( $continuation !== '' ) $args['continuation'] = $continuation;
+		$url = add_query_arg( $args, 'https://api.canva.com/rest/v1/brand-templates' );
+		return $this->get( $url );
+	}
+
+	/** Canva: create autofill design from brand template (may require autofill/dataset support). */
+	public function canva_create_autofill( string $brand_template_id, array $data = array(), string $title = '' ): array {
+		if ( $this->connector->id() !== 'canva' ) throw new Misconfigured_Exception( 'Not a Canva client.' );
+		$payload = array( 'brand_template_id' => $brand_template_id );
+		if ( ! empty( $data ) ) $payload['data'] = $data;
+		if ( $title !== '' ) $payload['title'] = $title;
+		return $this->post( 'https://api.canva.com/rest/v1/autofills', array(
+			'headers' => array( 'Content-Type' => 'application/json' ),
+			'body'    => wp_json_encode( $payload ),
+		) );
+	}
+
+	/** Canva: get autofill job */
+	public function canva_get_autofill( string $job_id ): array {
+		if ( $this->connector->id() !== 'canva' ) throw new Misconfigured_Exception( 'Not a Canva client.' );
+		return $this->get( 'https://api.canva.com/rest/v1/autofills/' . rawurlencode( $job_id ) );
+	}
 }
