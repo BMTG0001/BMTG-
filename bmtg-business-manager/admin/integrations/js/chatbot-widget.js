@@ -63,34 +63,23 @@
   function init(mount){
     if(!mount || mount.__bmtgInit) return; mount.__bmtgInit=true;
     const launcher=el('button','bmtg-chat-launcher'); launcher.type='button'; launcher.setAttribute('aria-label','Open chat');
-    if(UI.iconUrl){ const li=document.createElement('img'); li.src=UI.iconUrl; li.alt=''; li.style.width='26px'; li.style.height='26px'; li.style.borderRadius='50%'; li.style.objectFit='cover'; launcher.appendChild(li); }
+    if(UI.iconUrl){ const li=document.createElement('img'); li.src=UI.iconUrl; li.alt=''; li.style.width='28px'; li.style.height='28px'; li.style.borderRadius='50%'; li.style.objectFit='cover'; launcher.appendChild(li); }
     else { launcher.appendChild(svg(ICONS.chat)); }
     launcher.appendChild(el('span','bmtg-launcher-label', UI.launcherLabel || 'Chat with us'));
 
-    const panel=el('div','bmtg-chat-panel'); panel.setAttribute('role','dialog'); panel.setAttribute('aria-label', UI.headerTitle || 'BM Travel Group');
-    const header=el('div','bmtg-chat-header');
-    const avatar=el('div','bmtg-avatar');
-    if(UI.iconUrl){ const im=document.createElement('img'); im.src=UI.iconUrl; im.alt=''; im.style.width='100%'; im.style.height='100%'; im.style.borderRadius='50%'; im.style.objectFit='cover'; avatar.appendChild(im); }
+    const panel=el('div','bmtg-chat-panel'); panel.setAttribute('role','dialog'); panel.setAttribute('aria-label', UI.headerTitle || 'BM Travel Group Chat');
+    const header=el('div','bmtg-chat-header bmtg-chat-header-compact');
+    const avatar=el('div','bmtg-avatar bmtg-avatar-lg');
+    if(UI.iconUrl){ const im=document.createElement('img'); im.src=UI.iconUrl; im.alt='BM Travel Group'; im.style.width='100%'; im.style.height='100%'; im.style.borderRadius='50%'; im.style.objectFit='cover'; avatar.appendChild(im); }
     else { avatar.appendChild(svg(ICONS.user)); }
-    const htext=el('div','bmtg-htext'); htext.innerHTML='<div class="bmtg-title"></div><div class="bmtg-sub"></div>';
-    htext.querySelector('.bmtg-title').textContent = UI.headerTitle || 'BM Travel Group';
-    htext.querySelector('.bmtg-sub').textContent = UI.headerTagline || 'Concierge · bmtravelgroup.com';
+    const htext=el('div','bmtg-htext'); htext.innerHTML='<div class="bmtg-title"></div>';
+    htext.querySelector('.bmtg-title').textContent = 'BM Travel Group Chat';
     const closeBtn=el('button','bmtg-close'); closeBtn.type='button'; closeBtn.setAttribute('aria-label','Close chat'); closeBtn.appendChild(svg(ICONS.close));
     header.appendChild(avatar); header.appendChild(htext); header.appendChild(closeBtn);
 
     const msgs=el('div','bmtg-chat-messages'); msgs.setAttribute('aria-live','polite');
     const typing=el('div','bmtg-typing'); typing.style.display='none';
     const tb=el('div','bmtg-typing-bubble'); tb.appendChild(el('span','bmtg-dot')); tb.appendChild(el('span','bmtg-dot')); tb.appendChild(el('span','bmtg-dot')); typing.appendChild(tb);
-
-    const nudge=el('div','bmtg-nudge'); nudge.style.display='none';
-    nudge.innerHTML='<p class="bmtg-nudge-text">Need a quicker response? Connect on WhatsApp or share your details and our team will assist you.</p>';
-    const nudgeActions=el('div','bmtg-nudge-actions'); nudge.appendChild(nudgeActions);
-
-    const actions=el('div','bmtg-chat-actions');
-    const chip1=el('button','bmtg-chip','Plan a journey'); chip1.type='button';
-    const chip2=el('button','bmtg-chip','Destinations'); chip2.type='button';
-    const chip3=el('button','bmtg-chip','Contact team'); chip3.type='button';
-    actions.appendChild(chip1); actions.appendChild(chip2); actions.appendChild(chip3);
 
     const leadForm=el('div','bmtg-lead-form');
     leadForm.innerHTML='<p class="bmtg-form-title">Share your details</p>'+
@@ -106,25 +95,21 @@
     const send=el('button','bmtg-icon-btn'); send.type='button'; send.setAttribute('aria-label','Send'); send.appendChild(svg(ICONS.send));
     inputWrap.appendChild(ta); inputWrap.appendChild(send);
 
-    panel.appendChild(header); panel.appendChild(msgs); panel.appendChild(typing); panel.appendChild(nudge); panel.appendChild(actions); panel.appendChild(leadForm); panel.appendChild(inputWrap);
+    panel.appendChild(header); panel.appendChild(msgs); panel.appendChild(typing); panel.appendChild(leadForm); panel.appendChild(inputWrap);
     document.body.appendChild(launcher); document.body.appendChild(panel);
     applyUiVars(launcher); applyUiVars(panel);
 
-    let session=null, busy=false, unclearCount=0, nudgeShown=false;
+    let session=null, busy=false;
 
-    function toggleLead(show){ leadForm.classList.toggle('open', !!show); if(show){ nudge.style.display='none'; setTimeout(()=>leadForm.scrollIntoView({block:'nearest'}), 50); } }
-    function showNudge(){
-      if(nudgeShown) return; nudgeShown=true;
-      nudgeActions.innerHTML='';
-      if(BMTGChatbot.whatsappUrl){
-        const wa=document.createElement('a'); wa.className='bmtg-nudge-btn primary'; wa.href=BMTGChatbot.whatsappUrl; wa.target='_blank'; wa.rel='noopener'; wa.appendChild(svg(ICONS.wa)); wa.appendChild(document.createTextNode('WhatsApp'));
-        nudgeActions.appendChild(wa);
-      }
-      const formBtn=el('button', BMTGChatbot.whatsappUrl?'bmtg-nudge-btn':'bmtg-nudge-btn primary'); formBtn.type='button'; formBtn.appendChild(svg(ICONS.form)); formBtn.appendChild(document.createTextNode('Share details'));
-      formBtn.addEventListener('click', ()=>toggleLead(true));
-      nudgeActions.appendChild(formBtn);
-      nudge.style.display='block'; msgs.scrollTop=msgs.scrollHeight;
+    function wantsLeadForm(text){
+      const t=String(text||'').toLower();
+      return /(\bshare\b.*\b(detail|info|contact|number|email|phone)\b|\bcontact\s*(me|you|team|form|details?)\b|\bmy\s*(details?|number|email|phone|contact)\b|\blead\s*form\b|\bcallback\b|\bcall\s*me\b|\breach\s*me\b|\bsend\s*(my\s*)?details\b|\bget\s*in\s*touch\b)/i.test(t);
     }
+    function wantsWhatsapp(text){
+      const t=String(text||'').toLowerCase();
+      return /(\bwhatsapp\b|\bwa\b\b|\bchat\s*on\s*whatsapp\b|\bwhats\s*app\b|\blink\s*to\s*connect\b|\bconnect\s*on\s*whatsapp\b)/i.test(t);
+    }
+    function toggleLead(show){ leadForm.classList.toggle('open', !!show); if(show){ setTimeout(()=>leadForm.scrollIntoView({block:'nearest'}), 50); } }
 
     function addMsg(role,text,image,status){
       const m=el('div','bmtg-msg '+(role==='user'?'user':'assistant'));
@@ -152,14 +137,12 @@
     function closePanel(){ panel.classList.remove('open'); launcher.style.display='flex'; }
     launcher.addEventListener('click', openPanel); closeBtn.addEventListener('click', closePanel);
 
-    chip1.addEventListener('click', ()=>{ ta.value='I would like to plan a journey'; ta.focus(); });
-    chip2.addEventListener('click', ()=>{ ta.value='Which destinations do you specialise in?'; doSend(); });
-    chip3.addEventListener('click', ()=>{ if(BMTGChatbot.whatsappUrl){ showNudge(); } else { toggleLead(true); } });
-
     async function doSend(){
       const text=ta.value.trim(); if(!text || busy) return; ta.value=''; ta.style.height='auto';
-      if(unclearInput(text)) unclearCount++; else unclearCount=Math.max(0, unclearCount-1);
+      const askLead = wantsLeadForm(text);
+      const askWa = wantsWhatsapp(text);
       const userMsg=addMsg('user',text,null,'pending'); busy=true; typing.style.display='block'; msgs.scrollTop=msgs.scrollHeight;
+      if(askLead){ toggleLead(true); }
       try{
         await ensureSession();
         const d=await api('/message',{message:text});
@@ -168,12 +151,13 @@
         if(replyText || d.image) addMsg('assistant', replyText, d.image||null);
         if(d.notice) addMsg('assistant', d.notice);
         if(d.canva && d.canva.url && !/canva/i.test(replyText)){ addMsg('assistant', '**Canva itinerary design:** '+d.canva.url); }
-        const fallbackHint = /unable to|connect you with our team|couldn.?t get that/i.test(replyText);
-        if(fallbackHint || unclearCount >= 2) showNudge();
+        if(askWa && BMTGChatbot.whatsappUrl && !/https?:\/\/wa\.me/i.test(replyText)){
+          addMsg('assistant', 'WhatsApp link ready to connect: ' + BMTGChatbot.whatsappUrl);
+        }
       } catch(e){
         markDelivered(userMsg); typing.style.display='none';
         addMsg('assistant', e.message || 'Sorry, something went wrong. Please try again.');
-        showNudge();
+        if(askWa && BMTGChatbot.whatsappUrl){ addMsg('assistant', 'WhatsApp link ready to connect: ' + BMTGChatbot.whatsappUrl); }
       } finally { busy=false; msgs.scrollTop=msgs.scrollHeight; }
     }
     send.addEventListener('click', doSend);

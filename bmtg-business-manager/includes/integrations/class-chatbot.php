@@ -126,6 +126,8 @@ class Chatbot {
 			$wa_url = 'https://wa.me/' . rawurlencode( $wa_num ) . '?text=' . rawurlencode( (string) ( $s['whatsapp_prefill'] ?? 'Hello BM Travel Group, I would like assistance planning a journey.' ) );
 		}
 		$ui = $this->ui_settings( $s );
+		$ui['headerTitle'] = 'BM Travel Group Chat';
+		$ui['headerTagline'] = '';
 		$inline = $this->ui_inline_css( $ui );
 		if ( $inline ) {
 			wp_add_inline_style( 'bmtg-chatbot-widget', $inline );
@@ -138,7 +140,6 @@ class Chatbot {
 			'handoverMessage'  => $s['handover_message'],
 			'requireConsent'   => ! empty( $s['require_consent'] ),
 			'whatsappUrl'      => $wa_url,
-			'whatsappLabel'    => 'Continue on WhatsApp',
 			'ui'               => $ui,
 			'canvaItinerary'   => ! empty( $s['canva_itinerary_enabled'] ),
 		) );
@@ -203,7 +204,7 @@ class Chatbot {
 		$css .= '.bmtg-chat-panel{font-family:var(--bmtg-font-family,inherit);font-size:var(--bmtg-font-size,14.5px);}';
 		$css .= '.bmtg-chat-launcher{font-family:var(--bmtg-font-family,inherit);}';
 		$css .= '.bmtg-chat-header .bmtg-title{font-size:var(--bmtg-headline-size,15px);}';
-		$css .= '.bmtg-chat-header .bmtg-sub{font-size:var(--bmtg-tagline-size,12px);}';
+		$css .= '.bmtg-chat-header .bmtg-sub{display:none !important;}';
 		$css .= '.bmtg-msg .bmtg-meta{font-size:var(--bmtg-timestamp-size,11px);}';
 		$css .= '.bmtg-icon-btn,.bmtg-lead-form .bmtg-submit,.bmtg-nudge-btn.primary{background:var(--bmtg-button-bg,#128c7e);color:var(--bmtg-button-text,#fff);font-size:var(--bmtg-button-font-size,13px);border-radius:var(--bmtg-button-radius,18px);}';
 		$css .= '.bmtg-icon-btn{border-radius:50%;}';
