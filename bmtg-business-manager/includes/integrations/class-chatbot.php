@@ -966,11 +966,22 @@ class Chatbot {
 		update_post_meta( $conv_id, '_bmtg_messages', wp_json_encode( $messages ) );
 		$this->dispatch_inbox_event( $conv_id, 'message', array( 'role' => 'user', 'content' => $text, 'channel' => $channel, 'sender_id' => $sender_id ) );
 		if ( $status === 'staff' ) return; // staff handling; do not auto-reply
+
 		$reply = $this->generate_reply( $messages, $conv_id );
-		// Keep channel replies concise/plain text (no images in WhatsApp/Messenger auto-send here).
+		$pdf = $this->maybe_create_itinerary_pdf( $text, $messages, $conv_id );
+		$pdf_url = ( is_array( $pdf ) && ! empty( $pdf['pdf_url'] ) ) ? (string) $pdf['pdf_url'] : '';
+		if ( $pdf_url && stripos( $reply, $pdf_url ) === false ) {
+			$reply = trim( $reply . "\n\nItinerary (view/download/print): " . $pdf_url );
+		}
+		$reply = $this->sanitize_email_claims( $reply, $pdf_url ?: null );
+		// Keep channel replies plain text for WhatsApp/Messenger auto-send.
 		$reply = trim( wp_strip_all_tags( $reply ) );
+		$reply = preg_replace( "/\n{3,}/", "\n\n", $reply );
 		if ( $reply === '' ) $reply = (string) ( $this->settings()['fallback_message'] ?? 'A member of our team will assist you shortly.' );
 		$messages[] = array( 'role' => 'assistant', 'content' => $reply, 'at' => gmdate( 'c' ), 'channel' => $channel );
+		if ( $pdf_url ) {
+			$messages[] = array( 'role' => 'assistant', 'content' => '[itinerary_pdf]', 'at' => gmdate( 'c' ), 'channel' => $channel, 'pdf_url' => $pdf_url );
+		}
 		update_post_meta( $conv_id, '_bmtg_messages', wp_json_encode( $messages ) );
 		$this->dispatch_inbox_event( $conv_id, 'message', array( 'role' => 'assistant', 'content' => $reply, 'channel' => $channel ) );
 		$this->send_meta_reply( $channel, $sender_id, $reply );

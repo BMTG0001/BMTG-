@@ -69,6 +69,11 @@ class Hub {
 			}
 		}
 
+		// Best-effort daily social auto-post (Instagram/Google Trends) when enabled.
+		if ( class_exists( '\\BMTG\\Integrations\\Social' ) ) {
+			Social::register_hooks();
+		}
+
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 		add_action( 'admin_notices', array( $this, 'admin_notices' ) );

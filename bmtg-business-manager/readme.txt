@@ -2,7 +2,7 @@
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 0.1.11
+Stable tag: 0.1.13
 License: Proprietary
 
 Business management plugin including Integrations Hub (Groq, OpenRouter, Unsplash, Canva Connect) and public website chatbot.
