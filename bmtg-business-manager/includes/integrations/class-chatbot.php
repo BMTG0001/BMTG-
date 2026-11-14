@@ -209,13 +209,65 @@ class Chatbot {
 
 		$reply = $this->generate_reply( $messages, $post->ID );
 		$messages[] = array( 'role' => 'assistant', 'content' => $reply, 'at' => gmdate( 'c' ) );
+		$image = $this->maybe_attach_unsplash_image( $text );
+		if ( $image ) {
+			$messages[] = array( 'role' => 'assistant', 'content' => '[image]', 'at' => gmdate( 'c' ), 'image' => $image );
+			$this->dispatch_inbox_event( $post->ID, 'inspiration_image', array( 'image' => $image, 'query' => $text ) );
+		}
 		update_post_meta( $post->ID, '_bmtg_messages', wp_json_encode( $messages ) );
 		$this->dispatch_inbox_event( $post->ID, 'message', array( 'role' => 'assistant', 'content' => $reply ) );
-		return $this->private_response( array( 'reply' => $reply, 'status' => 'ai' ) );
+		return $this->private_response( array( 'reply' => $reply, 'status' => 'ai', 'image' => $image ) );
+	}
+
+	private function maybe_attach_unsplash_image( string $text ): ?array {
+		$t = mb_strtolower( $text );
+		$wants = preg_match('/\b(photo|picture|image|show|see|look|taj\s*mahal|monument|temple|palace|landmark)\b/u', $t);
+		if ( ! $wants ) return null;
+		$query = $this->extract_image_query( $text );
+		if ( $query === '' ) return null;
+		try {
+			$client = Manager::client( 'unsplash', 'live' );
+			$res = $client->search_photos( $query, 1, 1 );
+			if ( ! empty( $res['body']['results'][0] ) && is_array( $res['body']['results'][0] ) ) {
+				$p = $res['body']['results'][0];
+				$url = $p['urls']['small'] ?? ($p['urls']['regular'] ?? null);
+				if ( ! $url ) return null;
+				$photographer = $p['user']['name'] ?? 'Unsplash';
+				$link = $p['links']['html'] ?? 'https://unsplash.com';
+				return array(
+					'url' => $url,
+					'alt' => $p['alt_description'] ?? $query,
+					'credit' => 'Photo: ' . $photographer . ' / Unsplash',
+					'source' => $link,
+					'query' => $query,
+				);
+			}
+		} catch ( \Throwable $e ) {
+			return null;
+		}
+		return null;
+	}
+
+	private function extract_image_query( string $text ): string {
+		$t = trim( $text );
+		if ( preg_match('/taj\s*mahal/i', $t) ) return 'Taj Mahal Agra';
+		// Simple heuristic: remove common words.
+		$clean = preg_replace('/\b(show|me|a|an|the|photo|picture|image|of|please|can|you|see|i|want|to)\b/i', ' ', $t);
+		$clean = trim(preg_replace('/\s+/', ' ', (string)$clean));
+		if ($clean === '' || mb_strlen($clean) < 3) return '';
+		return mb_substr($clean, 0, 80);
 	}
 
 	private function generate_reply( array $messages, int $conversation_id ): string {
 		$s = $this->settings();
+		$latest = '';
+		for ( $i = count($messages)-1; $i >= 0; $i-- ) { if ( ($messages[$i]['role'] ?? '') === 'user' ) { $latest = (string)($messages[$i]['content'] ?? ''); break; } }
+		if ( $latest !== '' && $this->is_disallowed_request( $latest ) ) {
+			$refusal = 'I can only assist with respectful travel planning for BM Travel Group destinations and services. I cannot help with sexual, illegal, violent, hateful, or otherwise inappropriate requests. If you wish, I can help you plan a journey in India, Nepal, Bhutan, or Sri Lanka.';
+			$this->dispatch_inbox_event( $conversation_id, 'safety_refusal', array( 'reason' => 'policy' ) );
+			return $refusal;
+		}
+
 		$system = $this->system_prompt( $s );
 		$payload_messages = array_merge( array( array( 'role' => 'system', 'content' => $system ) ), array_map(function($m){
 			return array( 'role' => $m['role'] === 'assistant' ? 'assistant' : 'user', 'content' => (string) ($m['content'] ?? '') );
@@ -244,6 +296,13 @@ class Chatbot {
 		return $this->apply_safety_filters( $reply );
 	}
 
+	private function is_disallowed_request( string $text ): bool {
+		$t = mb_strtolower( $text );
+		$patterns = array( 'sex', 'sexual', 'nude', 'porn', 'escort', 'prostitut', 'rape', 'child abuse', 'minor', 'illegal', 'drugs', 'cocaine', 'heroin', 'weapon', 'bomb', 'kill', 'suicide', 'terror', 'hack', 'fraud', 'smuggl' );
+		foreach ( $patterns as $p ) { if ( strpos( $t, $p ) !== false ) return true; }
+		return false;
+	}
+
 	private function system_prompt( array $s ): string {
 		$knowledge = '';
 		if ( ! empty( $s['knowledge'] ) && is_array( $s['knowledge'] ) ) {
@@ -255,7 +314,9 @@ class Chatbot {
 			"Never disclose public prices, supplier rates, invented availability, or unconfirmed arrangements. " .
 			"Capture contact/travel requirements only when the visitor requests assistance and explicitly consents. " .
 			"Do not expose private guest conversations, proposals, itineraries or documents. " .
-			"If information is unavailable, offer human handover.\nOperating hours/fallback guidance: " . (string) $s['operating_hours'] . $knowledge;
+			"Refuse and do not answer requests that are sexual, violent, hateful, illegal, abusive, or otherwise inappropriate; respond with a brief safe refusal and offer travel assistance only. " .
+			"If information is unavailable, offer human handover. " .
+			"When a user asks to see a destination/place/photo (e.g. Taj Mahal), you may suggest a photo and the system may attach one approved image if available.\nOperating hours/fallback guidance: " . (string) $s['operating_hours'] . $knowledge;
 	}
 
 	private function apply_safety_filters( string $reply ): string {

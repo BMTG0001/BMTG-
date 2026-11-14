@@ -34,6 +34,7 @@ class Autoloader {
 			'BMTG\\Connectors\\'   => BMTG_PLUGIN_DIR . 'includes/connectors/',
 			'BMTG\\Migrations\\'   => BMTG_PLUGIN_DIR . 'includes/migrations/',
 			'BMTG\\CRM\\'          => BMTG_PLUGIN_DIR . 'includes/crm/',
+			'BMTG\\Shortcodes\\'   => BMTG_PLUGIN_DIR . 'includes/shortcodes/',
 		);
 		foreach ( $prefixes as $prefix => $base_dir ) {
 			$len = strlen( $prefix );

@@ -53,6 +53,13 @@ class Hub {
 			\BMTG\CRM\Module::boot();
 		}
 
+		if ( class_exists( '\\BMTG\\Shortcodes\\Shortcodes' ) ) {
+			\BMTG\Shortcodes\Shortcodes::register();
+		}
+		if ( class_exists( '\\BMTG\\Integrations\\Itinerary' ) ) {
+			\BMTG\Integrations\Itinerary::register_hooks();
+		}
+
 		// Public website chatbot (does not replace existing bmtg-chat plugin; integrates via hooks).
 		if ( ! defined( 'BMTG_CHATBOT_DISABLE' ) ) {
 			$chatbot = new Chatbot( $this );

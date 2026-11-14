@@ -11,6 +11,7 @@ class Module {
 	private ?Lead_Service $leads = null;
 	private ?Reminder_Service $reminders = null;
 	private ?Rest $rest = null;
+	private ?Admin $admin = null;
 
 	public static function boot(): void {
 		if ( self::$booted ) return;
@@ -27,6 +28,11 @@ class Module {
 		$this->reminders = new Reminder_Service();
 		$this->rest = new Rest( $this->customers, $this->leads, $this->reminders );
 		$this->rest->register_hooks();
+
+		if ( is_admin() ) {
+			$this->admin = new Admin();
+			$this->admin->register_hooks();
+		}
 
 		add_filter( 'bmtg_create_or_link_crm_lead', array( $this->leads, 'create_or_link_from_chatbot' ), 10, 3 );
 		add_action( 'bmtg_unified_inbox_event', array( $this->leads, 'handle_inbox_event' ), 10, 1 );
