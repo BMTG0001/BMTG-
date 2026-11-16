@@ -1,225 +1,227 @@
 <!--
 BM TRAVEL GROUP | WILDLIFE & SAFARIS
 Elementor implementation: paste this complete file's contents into ONE HTML widget.
-Design direction: elite jungle editorial — ivory/cream base with a whisper of deep forest, restrained
-antique gold accents, white cards, generous spacing, serif headings. Large authentic wildlife imagery.
-Hero: cinematic forest photograph with a soft white text panel. Closing section: understated charcoal.
-Image policy: uses the existing BMTG WordPress Media Library wildlife image supplied earlier.
-No invented park-specific photographs are used for other parks.
+Design: elite magazine editorial — warm parchment base, restrained antique gold, deep ink typography,
+white card surfaces, fine hairline rules, generous spacing. No heavy green blocks, no dominant white void.
+Hero: clean full-bleed forest photograph with a soft, partially transparent text panel only behind the copy,
+so the wildlife image stays visible. All internal same-page anchors and external links preserved.
+Images: Unsplash wildlife/forest photography (source.unsplash.com keywords). Replace with specific
+Unsplash photo IDs if desired.
+Authenticity: park descriptions, IUCN categories, and official links retained as supplied; no invented
+park-specific facts or sighting guarantees.
 -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap');
 
 #bmtg-wildlife{
- --ink:#232323;
- --gold:#b99a62;
- --gold-light:#d9c89e;
- --ivory:#f7f5ef;
- --paper:#f1ede2;
- --white:#ffffff;
- --jungle:#2d3a33;        /* deep forest whisper - used sparingly */
- --jungle-mist:#e8ece4;   /* subtle ivory-tinted green section break */
+ --parchment:#f4efe6;
+ --card:#ffffff;
+ --ink:#212121;
+ --gold:#a88757;
+ --gold-dark:#7f623f;
  --muted:#6e6b65;
- --line:#e8e4d9;
- --charcoal:#242424;
+ --line:#e4dccf;
+ --shadow:rgba(0,0,0,0.07);
  color:var(--ink);
- background:var(--white);
- font:400 14px/1.8 'DM Sans',sans-serif;
+ background:var(--parchment);
+ font:400 14px/1.75 'DM Sans',sans-serif;
  overflow:hidden;
 }
 #bmtg-wildlife *{box-sizing:border-box}
 #bmtg-wildlife img{display:block;width:100%;height:100%;object-fit:cover}
 #bmtg-wildlife a{color:inherit;text-decoration:none}
 #bmtg-wildlife a:focus-visible{outline:2px solid var(--gold);outline-offset:4px}
-#bmtg-wildlife .ww-wrap{width:min(1180px,90%);margin:auto}
-#bmtg-wildlife .ww-kicker{font-size:10px;letter-spacing:2.4px;text-transform:uppercase;color:var(--gold);font-weight:700}
-#bmtg-wildlife .ww-title{font:400 clamp(36px,5vw,62px)/1.12 'Playfair Display',serif;letter-spacing:-.8px;margin:13px 0 20px;color:var(--ink)}
-#bmtg-wildlife .ww-copy{color:var(--muted);font-size:13px;line-height:2;font-weight:300}
-#bmtg-wildlife .ww-section{padding:88px 0}
-#bmtg-wildlife .ww-btn{display:inline-flex;align-items:center;gap:14px;background:var(--gold);border:1px solid var(--gold);color:#171717!important;padding:14px 22px;font-size:9px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;transition:.25s}
+#bmtg-wildlife .ww-wrap{width:min(1180px,92%);margin:auto}
+#bmtg-wildlife .ww-kicker{font-size:10px;letter-spacing:2.6px;text-transform:uppercase;color:var(--gold-dark);font-weight:700;margin-bottom:8px}
+#bmtg-wildlife .ww-title{font:400 clamp(34px,5vw,60px)/1.12 'Playfair Display',serif;letter-spacing:-.6px;margin:10px 0 18px;color:var(--ink)}
+#bmtg-wildlife .ww-copy{color:var(--muted);font-size:13px;line-height:1.85;font-weight:400}
+#bmtg-wildlife .ww-section{padding:76px 0;position:relative}
+#bmtg-wildlife .ww-section.ww-alt{background:var(--parchment)}
+#bmtg-wildlife .ww-btn{display:inline-flex;align-items:center;gap:12px;background:var(--gold);border:1px solid var(--gold);color:#1a1a1a!important;padding:13px 22px;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;transition:.25s}
 #bmtg-wildlife .ww-btn:hover{background:var(--ink);color:#fff!important;border-color:var(--ink)}
-#bmtg-wildlife .ww-text-link{display:inline-flex;align-items:center;gap:9px;font-size:10px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;border-bottom:1px solid var(--gold);padding-bottom:5px;color:var(--ink)}
-#bmtg-wildlife .ww-text-link span{color:var(--gold);font-size:15px}
-#bmtg-wildlife .ww-rule{width:44px;height:1px;background:var(--gold);margin:23px 0}
+#bmtg-wildlife .ww-text-link{display:inline-flex;align-items:center;gap:8px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--gold);padding-bottom:4px;color:var(--ink)}
+#bmtg-wildlife .ww-text-link span{color:var(--gold-dark);font-size:14px}
+#bmtg-wildlife .ww-rule{width:40px;height:1px;background:var(--gold);margin:20px 0}
 
-/* HERO - cinematic forest photo, soft white text panel */
-#bmtg-wildlife .ww-hero{min-height:650px;height:min(790px,88vh);display:flex;align-items:center;position:relative;color:var(--ink);background:url('https://bmtravelgroup.com/wp-content/uploads/2026/04/ranthambhore-national-park-scaled.jpg') center/cover no-repeat}
-#bmtg-wildlife .ww-hero:before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(255,255,255,.82) 0%,rgba(255,255,255,.66) 56%,rgba(255,255,255,.52) 100%)}
-#bmtg-wildlife .ww-hero-inner{position:relative;z-index:1;width:min(1180px,90%);margin:auto}
-#bmtg-wildlife .ww-hero-panel{max-width:720px;padding:42px 46px 45px;background:rgba(255,255,255,.86);border-left:2px solid var(--gold);backdrop-filter:blur(7px)}
-#bmtg-wildlife .ww-hero .ww-kicker{color:var(--gold)}
-#bmtg-wildlife .ww-hero h1{font:400 clamp(52px,8vw,96px)/.99 'Playfair Display',serif;letter-spacing:-1.5px;color:var(--ink);margin:19px 0 22px}
-#bmtg-wildlife .ww-hero p{max-width:560px;color:var(--muted);font-size:14px;line-height:2;margin:0 0 28px;font-weight:300}
-#bmtg-wildlife .ww-hero-note{position:absolute;right:5%;bottom:30px;color:var(--muted);font-size:9px;letter-spacing:2px;text-transform:uppercase}
+/* HERO - clean wildlife photograph, soft panel only behind text */
+#bmtg-wildlife .ww-hero{min-height:720px;height:min(860px,90vh);display:flex;align-items:center;position:relative;background:url('https://source.unsplash.com/1600x1000/?forest,wildlife,tiger,india') center/cover no-repeat}
+#bmtg-wildlife .ww-hero:before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(244,239,230,.55) 0%,rgba(255,255,255,.42) 55%,rgba(255,255,255,.30) 100%)}
+#bmtg-wildlife .ww-hero-inner{position:relative;z-index:1;width:min(1180px,92%);margin:auto}
+#bmtg-wildlife .ww-hero-panel{max-width:640px;padding:42px 46px 44px;background:rgba(255,255,255,.72);border-left:2px solid var(--gold);backdrop-filter:blur(6px)}
+#bmtg-wildlife .ww-hero .ww-kicker{color:var(--gold-dark)}
+#bmtg-wildlife .ww-hero h1{font:400 clamp(56px,9vw,104px)/.96 'Playfair Display',serif;letter-spacing:-1.6px;color:var(--ink);margin:18px 0 22px}
+#bmtg-wildlife .ww-hero p{max-width:520px;color:var(--muted);font-size:14px;line-height:1.9;margin:0 0 26px}
+#bmtg-wildlife .ww-hero-note{position:absolute;right:4%;bottom:28px;color:var(--muted);font-size:9px;letter-spacing:2.2px;text-transform:uppercase}
 
-/* NAV STRIP */
-#bmtg-wildlife .ww-nav{background:var(--white);color:var(--ink);padding:21px 0;border-bottom:1px solid var(--line)}
+/* NAV */
+#bmtg-wildlife .ww-nav{background:var(--card);color:var(--ink);padding:20px 0;border-bottom:1px solid var(--line)}
 #bmtg-wildlife .ww-nav-inner{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
-#bmtg-wildlife .ww-nav-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold)}
+#bmtg-wildlife .ww-nav-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gold-dark)}
 #bmtg-wildlife .ww-nav-links{display:flex;gap:12px 24px;flex-wrap:wrap}
 #bmtg-wildlife .ww-nav-links a{font-size:10px;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:4px}
-#bmtg-wildlife .ww-nav-links a:hover{color:var(--gold);border-color:var(--gold)}
+#bmtg-wildlife .ww-nav-links a:hover{color:var(--gold-dark);border-color:var(--gold-dark)}
 
 /* INTRO + SPECIES */
-#bmtg-wildlife .ww-intro-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:9%;align-items:center}
-#bmtg-wildlife .ww-intro-aside{border-left:1px solid var(--gold);padding:10px 0 10px 28px}
-#bmtg-wildlife .ww-species{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:34px}
-#bmtg-wildlife .ww-species-item{background:var(--white);padding:19px 16px;border:1px solid var(--line)}
-#bmtg-wildlife .ww-species-item strong{display:block;font:400 20px 'Playfair Display',serif;color:var(--ink);margin-bottom:4px}
-#bmtg-wildlife .ww-species-item span{font-size:10px;color:var(--muted);letter-spacing:.5px}
+#bmtg-wildlife .ww-intro-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:10%;align-items:center}
+#bmtg-wildlife .ww-intro-aside{border-left:1px solid var(--gold);padding:8px 0 8px 26px}
+#bmtg-wildlife .ww-species{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:30px}
+#bmtg-wildlife .ww-species-item{background:var(--card);padding:20px 16px;border:1px solid var(--line)}
+#bmtg-wildlife .ww-species-item strong{display:block;font:400 19px 'Playfair Display',serif;color:var(--ink);margin-bottom:5px}
+#bmtg-wildlife .ww-species-item span{font-size:10px;color:var(--muted);letter-spacing:.4px}
 
-/* INDIA PARK ATLAS */
-#bmtg-wildlife .ww-india{background:var(--ivory)}
-#bmtg-wildlife .ww-section-head{max-width:760px;margin-bottom:38px}
-#bmtg-wildlife .ww-atlas-intro{display:flex;justify-content:space-between;align-items:end;gap:25px;margin-bottom:28px}
-#bmtg-wildlife .ww-park-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-#bmtg-wildlife .ww-park{background:var(--white);border:1px solid var(--line);padding:24px 23px 22px;min-height:210px;display:flex;flex-direction:column;transition:.25s}
-#bmtg-wildlife .ww-park:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(26,26,26,.06);border-color:var(--gold)}
-#bmtg-wildlife .ww-park-top{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:12px}
-#bmtg-wildlife .ww-park-region{font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold);font-weight:700}
-#bmtg-wildlife .ww-park-type{font-size:8px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);background:var(--ivory);padding:5px 8px}
-#bmtg-wildlife .ww-park h3{font:400 25px/1.2 'Playfair Display',serif;color:var(--ink);margin:0 0 8px}
-#bmtg-wildlife .ww-park p{font-size:11px;line-height:1.85;color:var(--muted);margin:0 0 16px}
+/* INDIA PARK ATLAS - magazine grid with image on each card */
+#bmtg-wildlife .ww-india{background:var(--card)}
+#bmtg-wildlife .ww-section-head{max-width:780px;margin-bottom:34px}
+#bmtg-wildlife .ww-atlas-intro{display:flex;justify-content:space-between;align-items:end;gap:28px;margin-bottom:26px}
+#bmtg-wildlife .ww-park-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+#bmtg-wildlife .ww-park{background:var(--card);border:1px solid var(--line);display:flex;flex-direction:column;transition:.25s}
+#bmtg-wildlife .ww-park:hover{transform:translateY(-2px);box-shadow:0 12px 28px var(--shadow);border-color:var(--gold)}
+#bmtg-wildlife .ww-park-photo{height:210px;overflow:hidden;background:var(--parchment)}
+#bmtg-wildlife .ww-park-photo img{object-position:center}
+#bmtg-wildlife .ww-park-photo figcaption{padding:10px 14px;font:400 10px/1.4 'Playfair Display',serif;color:var(--muted);background:var(--card);border-top:1px solid var(--line)}
+#bmtg-wildlife .ww-park-body{padding:18px 17px 16px;display:flex;flex-direction:column;flex:1}
+#bmtg-wildlife .ww-park-top{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px}
+#bmtg-wildlife .ww-park-region{font-size:8px;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold-dark);font-weight:700}
+#bmtg-wildlife .ww-park-type{font-size:7.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);background:var(--parchment);padding:4px 7px}
+#bmtg-wildlife .ww-park h3{font:400 20px/1.25 'Playfair Display',serif;color:var(--ink);margin:0 0 6px}
+#bmtg-wildlife .ww-park p{font-size:10.5px;line-height:1.7;color:var(--muted);margin:0 0 14px;flex:1}
 #bmtg-wildlife .ww-park-foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:10px}
-#bmtg-wildlife .ww-park-foot span{font-size:9px;color:var(--muted)}
-#bmtg-wildlife .ww-park-foot a{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;border-bottom:1px solid var(--gold);padding-bottom:4px;color:var(--ink)}
+#bmtg-wildlife .ww-park-foot span{font-size:8.5px;color:var(--muted)}
+#bmtg-wildlife .ww-park-foot a{font-size:8.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;border-bottom:1px solid var(--gold);padding-bottom:3px;color:var(--ink)}
 
-/* FEATURE */
-#bmtg-wildlife .ww-feature-grid{display:grid;grid-template-columns:1fr 1fr;gap:8%;align-items:center}
-#bmtg-wildlife .ww-feature-photo{height:510px;position:relative;overflow:hidden;background:var(--paper)}
+/* FEATURE - half image, half copy */
+#bmtg-wildlife .ww-feature-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:6%;align-items:center}
+#bmtg-wildlife .ww-feature-photo{height:560px;position:relative;overflow:hidden;background:var(--parchment)}
 #bmtg-wildlife .ww-feature-photo img{object-position:center}
-#bmtg-wildlife .ww-photo-caption{position:absolute;left:20px;bottom:20px;background:rgba(255,255,255,.82);color:var(--ink);padding:12px 16px;font-size:9px;letter-spacing:1.4px;text-transform:uppercase;backdrop-filter:blur(4px)}
-#bmtg-wildlife .ww-feature-copy p{margin:0 0 16px}
+#bmtg-wildlife .ww-photo-caption{position:absolute;left:24px;bottom:24px;background:rgba(255,255,255,.86);color:var(--ink);padding:14px 18px;font:400 11px/1.5 'Playfair Display',serif;backdrop-filter:blur(6px)}
+#bmtg-wildlife .ww-feature-copy p{margin:0 0 18px}
 
-/* PARK COLLECTION BY REGION - subtle jungle-mist break */
-#bmtg-wildlife .ww-region-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:35px}
-#bmtg-wildlife .ww-region{padding:29px;background:var(--white);color:var(--ink);min-height:250px;position:relative;overflow:hidden;border:1px solid var(--line)}
-#bmtg-wildlife .ww-region:after{content:"";position:absolute;width:160px;height:160px;border:1px solid rgba(185,154,98,.2);border-radius:50%;right:-55px;top:-55px}
-#bmtg-wildlife .ww-region small{font-size:9px;letter-spacing:1.8px;text-transform:uppercase;color:var(--gold)}
-#bmtg-wildlife .ww-region h3{font:400 29px 'Playfair Display',serif;color:var(--ink);margin:13px 0}
-#bmtg-wildlife .ww-region p{font-size:11px;line-height:1.9;color:var(--muted);margin:0}
-#bmtg-wildlife .ww-region a{display:inline-block;margin-top:18px;font-size:9px;letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--gold);padding-bottom:4px;color:var(--ink)}
+/* REGION GRID */
+#bmtg-wildlife .ww-region-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:32px}
+#bmtg-wildlife .ww-region{padding:30px;background:var(--card);color:var(--ink);min-height:300px;position:relative;overflow:hidden;border:1px solid var(--line)}
+#bmtg-wildlife .ww-region:after{content:"";position:absolute;width:170px;height:170px;border:1px solid rgba(168,135,87,.15);border-radius:50%;right:-60px;top:-60px}
+#bmtg-wildlife .ww-region small{font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:var(--gold-dark)}
+#bmtg-wildlife .ww-region h3{font:400 28px 'Playfair Display',serif;color:var(--ink);margin:12px 0}
+#bmtg-wildlife .ww-region p{font-size:11px;line-height:1.85;color:var(--muted);margin:0}
+#bmtg-wildlife .ww-region a{display:inline-block;margin-top:18px;font-size:9px;letter-spacing:.9px;text-transform:uppercase;border-bottom:1px solid var(--gold);padding-bottom:4px;color:var(--ink)}
 
 /* NEPAL / SRI LANKA */
-#bmtg-wildlife .ww-international{background:var(--jungle-mist)}
-#bmtg-wildlife .ww-country-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:36px}
-#bmtg-wildlife .ww-country{background:var(--white);padding:34px 34px 30px;border-top:2px solid var(--gold)}
+#bmtg-wildlife .ww-international{background:var(--parchment)}
+#bmtg-wildlife .ww-country-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:34px}
+#bmtg-wildlife .ww-country{background:var(--card);padding:32px 32px 28px;border-top:2px solid var(--gold)}
 #bmtg-wildlife .ww-country .ww-kicker{font-size:9px}
-#bmtg-wildlife .ww-country h3{font:400 34px 'Playfair Display',serif;color:var(--ink);margin:10px 0}
-#bmtg-wildlife .ww-country p{font-size:12px;line-height:1.95;color:var(--muted)}
-#bmtg-wildlife .ww-country-list{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0}
-#bmtg-wildlife .ww-country-list a{padding:12px 13px;background:var(--ivory);font-size:11px;color:var(--ink);border-left:2px solid var(--gold)}
-#bmtg-wildlife .ww-country-list a:hover{background:var(--paper)}
+#bmtg-wildlife .ww-country h3{font:400 32px 'Playfair Display',serif;color:var(--ink);margin:10px 0}
+#bmtg-wildlife .ww-country p{font-size:12px;line-height:1.9;color:var(--muted)}
+#bmtg-wildlife .ww-country-list{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}
+#bmtg-wildlife .ww-country-list a{padding:12px 14px;background:var(--parchment);font-size:11px;color:var(--ink);border-left:2px solid var(--gold)}
+#bmtg-wildlife .ww-country-list a:hover{background:#eae3d6}
 #bmtg-wildlife .ww-country-note{font-size:10px!important;color:var(--muted)!important}
 
 /* EXPERIENCES */
-#bmtg-wildlife .ww-experience-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:34px}
-#bmtg-wildlife .ww-experience{background:var(--white);padding:25px;border:1px solid var(--line)}
-#bmtg-wildlife .ww-experience .ww-number{font:400 28px 'Playfair Display',serif;color:var(--gold)}
-#bmtg-wildlife .ww-experience h3{font:400 24px 'Playfair Display',serif;margin:9px 0;color:var(--ink)}
-#bmtg-wildlife .ww-experience p{font-size:11px;line-height:1.9;color:var(--muted);margin:0}
+#bmtg-wildlife .ww-experience-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px}
+#bmtg-wildlife .ww-experience{background:var(--card);padding:26px;border:1px solid var(--line)}
+#bmtg-wildlife .ww-experience .ww-number{font:400 26px 'Playfair Display',serif;color:var(--gold)}
+#bmtg-wildlife .ww-experience h3{font:400 22px 'Playfair Display',serif;margin:10px 0;color:var(--ink)}
+#bmtg-wildlife .ww-experience p{font-size:11px;line-height:1.8;color:var(--muted);margin:0}
 
-/* RESPONSIBLE - understated charcoal closing section */
-#bmtg-wildlife .ww-responsible{background:var(--charcoal);color:#fff}
-#bmtg-wildlife .ww-responsible .ww-title{color:#fff}
-#bmtg-wildlife .ww-responsible .ww-copy{color:rgba(255,255,255,.72)}
-#bmtg-wildlife .ww-resp-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:9%;align-items:center}
-#bmtg-wildlife .ww-resp-points{display:grid;grid-template-columns:1fr 1fr;gap:15px}
-#bmtg-wildlife .ww-resp-point{padding:18px;border:1px solid rgba(255,255,255,.12)}
-#bmtg-wildlife .ww-resp-point strong{display:block;color:var(--gold-light);font:400 19px 'Playfair Display',serif;margin-bottom:5px}
-#bmtg-wildlife .ww-resp-point span{font-size:10px;color:rgba(255,255,255,.7);line-height:1.8}
+/* RESPONSIBLE - understated, not charcoal block */
+#bmtg-wildlife .ww-responsible{background:var(--card);border:1px solid var(--line);color:var(--ink)}
+#bmtg-wildlife .ww-responsible .ww-title{color:var(--ink)}
+#bmtg-wildlife .ww-responsible .ww-copy{color:var(--muted)}
+#bmtg-wildlife .ww-resp-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:10%;align-items:center}
+#bmtg-wildlife .ww-resp-points{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+#bmtg-wildlife .ww-resp-point{padding:20px;border:1px solid var(--line)}
+#bmtg-wildlife .ww-resp-point strong{display:block;color:var(--gold-dark);font:400 18px 'Playfair Display',serif;margin-bottom:6px}
+#bmtg-wildlife .ww-resp-point span{font-size:10px;color:var(--muted);line-height:1.8}
 
 /* PLANNING / LINKS */
-#bmtg-wildlife .ww-planning-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:10%;align-items:start}
-#bmtg-wildlife .ww-step{display:grid;grid-template-columns:45px 1fr;gap:16px;padding:19px 0;border-bottom:1px solid var(--line)}
+#bmtg-wildlife .ww-planning-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:10%;align-items:start}
+#bmtg-wildlife .ww-step{display:grid;grid-template-columns:42px 1fr;gap:18px;padding:18px 0;border-bottom:1px solid var(--line)}
 #bmtg-wildlife .ww-step:first-child{border-top:1px solid var(--line)}
-#bmtg-wildlife .ww-step-no{font:400 26px 'Playfair Display',serif;color:var(--gold)}
-#bmtg-wildlife .ww-step h3{font:400 22px 'Playfair Display',serif;margin:0 0 4px;color:var(--ink)}
-#bmtg-wildlife .ww-step p{font-size:11px;color:var(--muted);line-height:1.85;margin:0}
-#bmtg-wildlife .ww-links-panel{background:var(--ivory);padding:34px;margin-top:42px}
-#bmtg-wildlife .ww-links-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 22px;margin-top:20px}
+#bmtg-wildlife .ww-step-no{font:400 24px 'Playfair Display',serif;color:var(--gold)}
+#bmtg-wildlife .ww-step h3{font:400 21px 'Playfair Display',serif;margin:0 0 5px;color:var(--ink)}
+#bmtg-wildlife .ww-step p{font-size:11px;color:var(--muted);line-height:1.8;margin:0}
+#bmtg-wildlife .ww-links-panel{background:var(--parchment);padding:34px;margin-top:44px;border:1px solid var(--line)}
+#bmtg-wildlife .ww-links-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 26px;margin-top:22px}
 #bmtg-wildlife .ww-links-grid a{font-size:11px;border-bottom:1px solid var(--gold);padding:8px 0;color:var(--ink)}
-#bmtg-wildlife .ww-links-grid a:hover{color:var(--gold)}
+#bmtg-wildlife .ww-links-grid a:hover{color:var(--gold-dark)}
 
-/* CTA - understated charcoal */
-#bmtg-wildlife .ww-cta{background:var(--charcoal);color:#fff;text-align:center;padding:92px 20px}
-#bmtg-wildlife .ww-cta-inner{max-width:760px;margin:auto}
-#bmtg-wildlife .ww-cta h2{font:400 clamp(38px,6vw,66px)/1.1 'Playfair Display',serif;color:#fff;margin:17px 0}
-#bmtg-wildlife .ww-cta p{font-size:12px;line-height:2;color:rgba(255,255,255,.75);max-width:590px;margin:0 auto 27px}
-#bmtg-wildlife .ww-cta .ww-btn{background:var(--gold);border-color:var(--gold);color:#171717!important}
-#bmtg-wildlife .ww-cta .ww-btn:hover{background:#fff;color:var(--ink)!important;border-color:#fff}
+/* CTA - elegant parchment/card, not dark block */
+#bmtg-wildlife .ww-cta{background:var(--card);color:var(--ink);text-align:center;padding:86px 20px;border-top:1px solid var(--line)}
+#bmtg-wildlife .ww-cta-inner{max-width:780px;margin:auto}
+#bmtg-wildlife .ww-cta h2{font:400 clamp(36px,6vw,62px)/1.1 'Playfair Display',serif;color:var(--ink);margin:16px 0}
+#bmtg-wildlife .ww-cta p{font-size:12px;line-height:2;color:var(--muted);max-width:600px;margin:0 auto 28px}
+#bmtg-wildlife .ww-cta .ww-btn{background:var(--gold);border-color:var(--gold);color:#1a1a1a!important}
+#bmtg-wildlife .ww-cta .ww-btn:hover{background:var(--ink);color:#fff!important;border-color:var(--ink)}
 
 /* CONSERVATION / SPECIES CARDS */
-#bmtg-wildlife .ww-conservation{background:var(--white)}
+#bmtg-wildlife .ww-conservation{background:var(--parchment)}
 #bmtg-wildlife .ww-conservation .ww-title{color:var(--ink)}
 #bmtg-wildlife .ww-conservation .ww-copy{color:var(--muted)}
-#bmtg-wildlife .ww-species-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:32px}
-#bmtg-wildlife .ww-species-card{padding:22px;background:var(--white);border:1px solid var(--line);min-height:155px}
-#bmtg-wildlife .ww-species-card b{display:block;font:400 22px/1.2 'Playfair Display',serif;color:var(--ink);margin:12px 0 7px}
-#bmtg-wildlife .ww-species-card p{font-size:10px;line-height:1.8;color:var(--muted);margin:0}
-#bmtg-wildlife .ww-status{display:inline-flex;align-items:center;font-size:8px;letter-spacing:.7px;text-transform:uppercase;color:var(--gold);background:rgba(185,154,98,.12);border:1px solid rgba(185,154,98,.25);padding:5px 8px;margin:0 5px 5px 0}
+#bmtg-wildlife .ww-species-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:30px}
+#bmtg-wildlife .ww-species-card{padding:24px;background:var(--card);border:1px solid var(--line);min-height:170px}
+#bmtg-wildlife .ww-species-card b{display:block;font:400 20px/1.25 'Playfair Display',serif;color:var(--ink);margin:12px 0 7px}
+#bmtg-wildlife .ww-species-card p{font-size:10px;line-height:1.75;color:var(--muted);margin:0}
+#bmtg-wildlife .ww-status{display:inline-flex;align-items:center;font-size:8px;letter-spacing:.6px;text-transform:uppercase;color:var(--gold-dark);background:rgba(168,135,87,.12);border:1px solid rgba(168,135,87,.22);padding:5px 8px;margin:0 5px 6px 0}
 
 /* LEOPARD LANDSCAPES */
-#bmtg-wildlife .ww-special-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:30px}
-#bmtg-wildlife .ww-special{padding:30px;background:var(--white);border:1px solid var(--line);position:relative;overflow:hidden}
-#bmtg-wildlife .ww-special h3{font:400 30px 'Playfair Display',serif;color:var(--ink);margin:8px 0}
-#bmtg-wildlife .ww-special p{font-size:11px;line-height:1.9;color:var(--muted)}
-#bmtg-wildlife .ww-special-meta{color:var(--gold);font-size:9px;letter-spacing:1.2px;text-transform:uppercase}
+#bmtg-wildlife .ww-special-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:30px}
+#bmtg-wildlife .ww-special{padding:30px;background:var(--card);border:1px solid var(--line);position:relative;overflow:hidden}
+#bmtg-wildlife .ww-special h3{font:400 28px 'Playfair Display',serif;color:var(--ink);margin:8px 0}
+#bmtg-wildlife .ww-special p{font-size:11px;line-height:1.85;color:var(--muted)}
+#bmtg-wildlife .ww-special-meta{color:var(--gold-dark);font-size:9px;letter-spacing:1.1px;text-transform:uppercase}
 #bmtg-wildlife .ww-forest-note{font-size:10px;color:var(--muted);line-height:1.8}
 
 /* SOURCES & DIRECTORY */
-#bmtg-wildlife .ww-sources{padding:27px 0;background:var(--paper)}
-#bmtg-wildlife .ww-sources-inner{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;color:var(--ink)}
-#bmtg-wildlife .ww-sources-title{font:400 19px 'Playfair Display',serif;color:var(--ink)}
-#bmtg-wildlife .ww-source-links{display:flex;gap:10px 20px;flex-wrap:wrap}
-#bmtg-wildlife .ww-source-links a{font-size:9px;text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid var(--gold);padding-bottom:4px;color:var(--ink)}
-#bmtg-wildlife .ww-directory{padding:30px 0;background:var(--white)}
-#bmtg-wildlife .ww-directory-inner{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
-#bmtg-wildlife .ww-directory strong{font:400 20px 'Playfair Display',serif;color:var(--ink)}
-#bmtg-wildlife .ww-directory-links{display:flex;gap:10px 20px;flex-wrap:wrap}
-#bmtg-wildlife .ww-directory-links a{font-size:9px;letter-spacing:.8px;text-transform:uppercase;border-bottom:1px solid var(--gold);padding-bottom:4px;color:var(--ink)}
+#bmtg-wildlife .ww-sources{padding:26px 0;background:var(--card)}
+#bmtg-wildlife .ww-sources-inner{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;color:var(--ink)}
+#bmtg-wildlife .ww-sources-title{font:400 18px 'Playfair Display',serif;color:var(--ink)}
+#bmtg-wildlife .ww-source-links{display:flex;gap:12px 24px;flex-wrap:wrap}
+#bmtg-wildlife .ww-source-links a{font-size:9px;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--gold);padding-bottom:4px;color:var(--ink)}
+#bmtg-wildlife .ww-directory{padding:28px 0;background:var(--parchment)}
+#bmtg-wildlife .ww-directory-inner{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+#bmtg-wildlife .ww-directory strong{font:400 19px 'Playfair Display',serif;color:var(--ink)}
+#bmtg-wildlife .ww-directory-links{display:flex;gap:12px 24px;flex-wrap:wrap}
+#bmtg-wildlife .ww-directory-links a{font-size:9px;letter-spacing:.7px;text-transform:uppercase;border-bottom:1px solid var(--gold);padding-bottom:4px;color:var(--ink)}
 
 /* RESPONSIVE */
-@media(max-width:900px){
- #bmtg-wildlife .ww-section{padding:72px 0}
+@media(max-width:980px){
+ #bmtg-wildlife .ww-section{padding:64px 0}
  #bmtg-wildlife .ww-park-grid{grid-template-columns:repeat(2,1fr)}
- #bmtg-wildlife .ww-intro-grid,#bmtg-wildlife .ww-feature-grid,#bmtg-wildlife .ww-resp-grid,#bmtg-wildlife .ww-planning-grid{gap:38px}
+ #bmtg-wildlife .ww-feature-grid{grid-template-columns:1fr}
+ #bmtg-wildlife .ww-feature-photo{height:360px}
+ #bmtg-wildlife .ww-intro-grid,#bmtg-wildlife .ww-resp-grid,#bmtg-wildlife .ww-planning-grid{gap:40px}
  #bmtg-wildlife .ww-region-grid{grid-template-columns:1fr 1fr}
  #bmtg-wildlife .ww-experience-grid{grid-template-columns:1fr 1fr}
  #bmtg-wildlife .ww-species-grid{grid-template-columns:repeat(2,1fr)}
+ #bmtg-wildlife .ww-special-grid{grid-template-columns:1fr}
+ #bmtg-wildlife .ww-country-grid{grid-template-columns:1fr}
 }
 @media(max-width:600px){
- #bmtg-wildlife .ww-wrap{width:90%}
- #bmtg-wildlife .ww-section{padding:60px 0}
- #bmtg-wildlife .ww-hero{height:auto;min-height:630px}
- #bmtg-wildlife .ww-hero-panel{padding:27px 23px}
- #bmtg-wildlife .ww-hero h1{font-size:57px}
+ #bmtg-wildlife .ww-wrap{width:92%}
+ #bmtg-wildlife .ww-section{padding:52px 0}
+ #bmtg-wildlife .ww-hero{min-height:620px;height:auto}
+ #bmtg-wildlife .ww-hero-panel{padding:26px 22px}
+ #bmtg-wildlife .ww-hero h1{font-size:56px}
  #bmtg-wildlife .ww-hero-note{display:none}
- #bmtg-wildlife .ww-nav-inner{align-items:flex-start;flex-direction:column}
- #bmtg-wildlife .ww-nav-links{gap:10px 16px}
+ #bmtg-wildlife .ww-nav-inner{flex-direction:column;align-items:flex-start}
  #bmtg-wildlife .ww-intro-grid,#bmtg-wildlife .ww-feature-grid,#bmtg-wildlife .ww-resp-grid,#bmtg-wildlife .ww-planning-grid{grid-template-columns:1fr}
- #bmtg-wildlife .ww-intro-aside{padding-left:18px}
+ #bmtg-wildlife .ww-intro-aside{padding-left:16px}
  #bmtg-wildlife .ww-species{grid-template-columns:1fr 1fr}
  #bmtg-wildlife .ww-atlas-intro{display:block}
  #bmtg-wildlife .ww-park-grid,#bmtg-wildlife .ww-region-grid,#bmtg-wildlife .ww-country-grid,#bmtg-wildlife .ww-experience-grid,#bmtg-wildlife .ww-species-grid,#bmtg-wildlife .ww-special-grid{grid-template-columns:1fr}
- #bmtg-wildlife .ww-feature-photo{height:340px}
- #bmtg-wildlife .ww-country{padding:26px 22px}
- #bmtg-wildlife .ww-country-list{grid-template-columns:1fr 1fr}
- #bmtg-wildlife .ww-resp-points{grid-template-columns:1fr 1fr}
- #bmtg-wildlife .ww-links-panel{padding:24px 20px}
  #bmtg-wildlife .ww-links-grid{grid-template-columns:1fr 1fr}
- #bmtg-wildlife .ww-directory-inner{align-items:flex-start;flex-direction:column}
+ #bmtg-wildlife .ww-links-panel{padding:24px 20px}
+ #bmtg-wildlife .ww-directory-inner{flex-direction:column;align-items:flex-start;gap:14px}
 }
-@media(prefers-reduced-motion:reduce){
- #bmtg-wildlife *{scroll-behavior:auto!important;transition:none!important}
-}
+@media(prefers-reduced-motion:reduce){#bmtg-wildlife *{scroll-behavior:auto!important;transition:none!important}}
 </style>
 
 <div id="bmtg-wildlife">
  <section class="ww-hero" aria-labelledby="ww-main-title">
   <div class="ww-hero-inner">
    <div class="ww-hero-panel">
-    <div class="ww-kicker">BM Travel Group · Wildlife & Safaris</div>
+    <div class="ww-kicker">BM Travel Group · Wildlife &amp; Safaris</div>
     <h1 id="ww-main-title">Into the<br>wild.</h1>
     <p>From India's celebrated tiger reserves and rhino grasslands to Nepal's Terai wilderness and Sri Lanka's leopard country, discover remarkable wildlife landscapes through thoughtfully planned private journeys.</p>
     <a class="ww-btn" href="/contact/">Plan a private safari <span>↗</span></a>
@@ -253,15 +255,15 @@ No invented park-specific photographs are used for other parks.
     </div>
     <aside class="ww-intro-aside">
      <div class="ww-kicker">The wildlife experience</div>
-     <h3 style="font:400 29px/1.25 'Playfair Display',serif;color:var(--ink);margin:8px 0 12px">Not simply a safari. A deeper connection with place.</h3>
+     <h3 style="font:400 28px/1.25 'Playfair Display',serif;color:var(--ink);margin:6px 0 10px">Not simply a safari. A deeper connection with place.</h3>
      <p class="ww-copy">Pair expert-led game drives with birding, nature walks where permitted, landscape experiences and distinctive stays. Encounters are never guaranteed; responsible time in the wild is the reward in itself.</p>
     </aside>
    </div>
    <div class="ww-species" aria-label="Wildlife highlights">
-    <div class="ww-species-item"><strong>Royal Bengal Tiger</strong><span>Central & northern India</span></div>
-    <div class="ww-species-item"><strong>One-horned Rhino</strong><span>Assam & Nepal's Terai</span></div>
+    <div class="ww-species-item"><strong>Royal Bengal Tiger</strong><span>Central &amp; northern India</span></div>
+    <div class="ww-species-item"><strong>One-horned Rhino</strong><span>Assam &amp; Nepal's Terai</span></div>
     <div class="ww-species-item"><strong>Asiatic Lion</strong><span>Gir, Gujarat</span></div>
-    <div class="ww-species-item"><strong>Asian Elephant</strong><span>India & Sri Lanka</span></div>
+    <div class="ww-species-item"><strong>Asian Elephant</strong><span>India &amp; Sri Lanka</span></div>
    </div>
   </div>
  </section>
@@ -270,42 +272,92 @@ No invented park-specific photographs are used for other parks.
   <div class="ww-wrap">
    <div class="ww-section-head">
     <div class="ww-kicker">The India wildlife collection</div>
-    <h2 class="ww-title">India's iconic national parks & tiger reserves.</h2>
+    <h2 class="ww-title">India's iconic national parks &amp; tiger reserves.</h2>
     <p class="ww-copy">Explore a considered selection of India's best-known wildlife destinations, from classic tiger country to rare one-horned rhinoceros, Asiatic lions, elephants, mangrove ecosystems and snow leopard landscapes. These are highlights, not a complete list of India's protected areas.</p>
    </div>
    <div class="ww-atlas-intro">
     <div class="ww-kicker">Discover by landscape and wildlife interest</div>
-    <p class="ww-copy" style="max-width:420px;margin:0">Park experiences, access rules and seasonal closures vary. We plan around current local guidance rather than promising a particular sighting.</p>
+    <p class="ww-copy" style="max-width:440px;margin:0">Park experiences, access rules and seasonal closures vary. We plan around current local guidance rather than promising a particular sighting.</p>
    </div>
    <div class="ww-park-grid">
-    <article class="ww-park"><div class="ww-park-top"><span class="ww-park-region">Uttarakhand · North India</span><span class="ww-park-type">Tiger · Elephant</span></div><h3>Jim Corbett National Park</h3><p>Forested foothills, riverine habitats and a celebrated landscape for tiger, elephant and birdlife.</p><div class="ww-park-foot"><span>Classic Himalayan foothills</span><a href="https://corbettgov.org/" target="_blank" rel="noopener noreferrer">Official park site ↗</a></div></article>
-    <article class="ww-park"><div class="ww-park-top"><span class="ww-park-region">Rajasthan · North India</span><span class="ww-park-type">Tiger · Heritage</span></div><h3>Ranthambore National Park</h3><p>Dry deciduous forest, lakes and the dramatic setting of Ranthambore Fort make this a signature tiger-safari destination.</p><div class="ww-park-foot"><span>Iconic tiger country</span><a href="https://forest.rajasthan.gov.in/" target="_blank" rel="noopener noreferrer">Rajasthan Forest ↗</a></div></article>
-    <article class="ww-park"><div class="ww-park-top"><span class="ww-park-region">Assam · North-East India</span><span class="ww-park-type">Rhino · Tiger</span></div><h3>Kaziranga National Park</h3><p>World-renowned for the Indian one-horned rhinoceros, with floodplain grasslands, wetlands and rich birdlife.</p><div class="ww-park-foot"><span>UNESCO World Heritage</span><a href="https://whc.unesco.org/en/list/337/" target="_blank" rel="noopener noreferrer">UNESCO profile ↗</a></div></article>
-    <article class="ww-park"><div class="ww-park-top"><span class="ww-park-region">Madhya Pradesh · Central India</span><span class="ww-park-type">Tiger · Forest</span></div><h3>Kanha National Park</h3><p>Sal forests and open meadows create one of India's most recognisable central Indian wildlife landscapes.</p><div class="ww-park-foot"><span>Forest & meadow country</span><a href="https://forest.mponline.gov.in/Search.aspx?park=2" target="_blank" rel="noopener noreferrer">Safari information ↗</a></div></article>
-    <article class="ww-park"><div class="ww-park-top"><span class="ww-park-region">Madhya Pradesh · Central India</span><span class="ww-park-type">Tiger · Biodiversity</span></div><h3>Bandhavgarh National Park</h3><p>A celebrated tiger landscape known for forested hills, meadows and a strong sense of wilderness.</p><div class="ww-park-foot"><span>Central Indian safari</span><a href="https://forest.mponline.gov.in/Index.aspx" target="_blank" rel="noopener noreferrer">MP Forest booking ↗</a></div></article>
-    <article class="ww-park"><div class="ww-park-top"><span class="ww-park-region">Madhya Pradesh · Central India</span><span class="ww-park-type">Tiger · Forest</span></div><h3>Pench National Park</h3><p>Teak forests and open woodland across the Madhya Pradesh–Maharashtra landscape, with tiger and diverse wildlife habitats.</p><div class="ww-park-foot"><span>Central Indian wilderness</span><a href="https://www.penchtiger.org/" target="_blank" rel="noopener noreferrer">Pench Tiger Reserve ↗</a></div></article>
-    <article class="ww-park"><div class="ww-park-top"><span class="ww-park-region">Maharashtra · Western India</span><span class="ww-park-type">Tiger · Forest</span></div><h3>Tadoba–Andhari Tiger Reserve</h3><p>A major Maharashtra wildlife destination of teak forest, bamboo thickets, lakes and tiger habitat.</p><div class="ww-park-foot"><span>Popular tiger reserve</span><a href="https://mytadoba.mahaforest.gov.in/" target="_blank" rel="noopener noreferrer">Official booking ↗</a></div></article>
-    <article class="ww-park"><div class="ww-park-top"><span class="ww-park-region">Gujarat · Western India</span><span class="ww-park-type">Asiatic Lion</span></div><h3>Gir National Park & Sanctuary</h3><p>The last natural home of the Asiatic lion, with dry deciduous forest and distinctive Saurashtra landscapes.</p><div class="ww-park-foot"><span>Asiatic lion country</span><a href="https://girlion.gujarat.gov.in/" target="_blank" rel="noopener noreferrer">Gir Lion project ↗</a></div></article>
-    <article class="ww-park"><div class="ww-park-top"><span class="ww-park-region">West Bengal · East India</span><span class="ww-park-type">Mangrove · Tiger</span></div><h3>Sundarbans National Park</h3><p>A remarkable tidal mangrove ecosystem of creeks, islands and forest, home to the Bengal tiger and specialised wildlife.</p><div class="ww-park-foot"><span>UNESCO mangrove wilderness</span><a href="https://whc.unesco.org/en/list/452/" target="_blank" rel="noopener noreferrer">UNESCO profile ↗</a></div></article>
-    <article class="ww-park"><div class="ww-park-top"><span class="ww-park-region">Kerala · South India</span><span class="ww-park-type">Elephant · Birdlife</span></div><h3>Periyar National Park</h3><p>Evergreen forest and the lake landscape of the Western Ghats, with opportunities to appreciate elephants and birdlife.</p><div class="ww-park-foot"><span>Western Ghats</span><a href="https://www.periyartigerreserve.org/" target="_blank" rel="noopener noreferrer">Periyar Tiger Reserve ↗</a></div></article>
-    <article class="ww-park"><div class="ww-park-top"><span class="ww-park-region">Karnataka · South India</span><span class="ww-park-type">Elephant · Tiger</span></div><h3>Bandipur National Park</h3><p>Part of the Nilgiri Biosphere landscape, with dry and moist deciduous forests supporting elephants, tigers and other wildlife.</p><div class="ww-park-foot"><span>Nilgiri landscape</span><a href="https://bandipurtigerreserve.org/" target="_blank" rel="noopener noreferrer">Bandipur reserve ↗</a></div></article>
-    <article class="ww-park"><div class="ww-park-top"><span class="ww-park-region">Ladakh · Himalayan India</span><span class="ww-park-type">Snow Leopard</span></div><h3>Hemis National Park</h3><p>High-altitude mountains and rugged valleys offer a very different wildlife journey in snow leopard habitat.</p><div class="ww-park-foot"><span>High-altitude wilderness</span><a href="https://www.incredibleindia.gov.in/" target="_blank" rel="noopener noreferrer">Incredible India ↗</a></div></article>
-
-    <article class="ww-park"><div class="ww-park-top"><span class="ww-park-region">Assam · North-East India</span><span class="ww-park-type">Pygmy Hog · Florican</span></div><h3>Manas National Park</h3><p>Terai grasslands, riverine forests and Himalayan foothills shelter rare grassland wildlife and remarkable biodiversity.</p><div><span class="ww-status">Pygmy hog · Critically Endangered</span><span class="ww-status">Bengal florican · Critically Endangered</span></div><div class="ww-park-foot"><span>UNESCO World Heritage</span><a href="https://whc.unesco.org/en/list/338/" target="_blank" rel="noopener noreferrer">UNESCO profile ↗</a></div></article>
-    <article class="ww-park"><div class="ww-park-top"><span class="ww-park-region">Jammu & Kashmir · North India</span><span class="ww-park-type">Hangul</span></div><h3>Dachigam National Park</h3><p>Mountain forests and alpine meadows near Srinagar form the best-known habitat of the Kashmir stag, or Hangul.</p><div><span class="ww-status">Hangul · Critically Endangered at national level</span></div><div class="ww-park-foot"><span>High-altitude forest</span><a href="https://jkwildlife.com/" target="_blank" rel="noopener noreferrer">J&K Wildlife ↗</a></div></article>
-    <article class="ww-park"><div class="ww-park-top"><span class="ww-park-region">Rajasthan · Thar Desert</span><span class="ww-park-type">Grassland · Bustard</span></div><h3>Desert National Park</h3><p>A vast arid ecosystem of dunes, rocky terrain and grassland, important for the Great Indian Bustard.</p><div><span class="ww-status">Great Indian bustard · Critically Endangered</span></div><div class="ww-park-foot"><span>Rare desert birdlife</span><a href="https://forest.rajasthan.gov.in/" target="_blank" rel="noopener noreferrer">Rajasthan Forest ↗</a></div></article>
-    <article class="ww-park"><div class="ww-park-top"><span class="ww-park-region">Uttar Pradesh · Terai</span><span class="ww-park-type">Rhino · Swamp Deer</span></div><h3>Dudhwa National Park</h3><p>Terai grasslands and sal forest support swamp deer, tiger, elephants and a reintroduced one-horned rhinoceros population.</p><div><span class="ww-status">One-horned rhino · Vulnerable</span></div><div class="ww-park-foot"><span>Terai ecosystem</span><a href="https://upecotourism.in/" target="_blank" rel="noopener noreferrer">UP Eco Tourism ↗</a></div></article>
-    <article class="ww-park"><div class="ww-park-top"><span class="ww-park-region">Madhya Pradesh · Central India</span><span class="ww-park-type">Tiger · River landscape</span></div><h3>Panna National Park</h3><p>Dry deciduous forest, the Ken River and dramatic escarpments make Panna a distinctive central Indian landscape.</p><div><span class="ww-status">Tiger · Endangered</span></div><div class="ww-park-foot"><span>Ken River country</span><a href="https://forest.mponline.gov.in/" target="_blank" rel="noopener noreferrer">MP Forest ↗</a></div></article>
+    <article class="ww-park">
+     <div class="ww-park-photo"><img src="https://source.unsplash.com/600x400/?tiger,forest,india" alt="Jim Corbett National Park wildlife" loading="lazy"><figcaption>Jim Corbett · Uttarakhand</figcaption></div>
+     <div class="ww-park-body"><div class="ww-park-top"><span class="ww-park-region">North India</span><span class="ww-park-type">Tiger · Elephant</span></div><h3>Jim Corbett National Park</h3><p>Forested foothills, riverine habitats and a celebrated landscape for tiger, elephant and birdlife.</p><div class="ww-park-foot"><span>Himalayan foothills</span><a href="https://corbettgov.org/" target="_blank" rel="noopener noreferrer">Official site ↗</a></div></div>
+    </article>
+    <article class="ww-park">
+     <div class="ww-park-photo"><img src="https://source.unsplash.com/600x400/?tiger,fort,india" alt="Ranthambore National Park wildlife" loading="lazy"><figcaption>Ranthambore · Rajasthan</figcaption></div>
+     <div class="ww-park-body"><div class="ww-park-top"><span class="ww-park-region">North India</span><span class="ww-park-type">Tiger · Heritage</span></div><h3>Ranthambore National Park</h3><p>Dry deciduous forest, lakes and the dramatic setting of Ranthambore Fort make this a signature tiger-safari destination.</p><div class="ww-park-foot"><span>Iconic tiger country</span><a href="https://forest.rajasthan.gov.in/" target="_blank" rel="noopener noreferrer">Rajasthan Forest ↗</a></div></div>
+    </article>
+    <article class="ww-park">
+     <div class="ww-park-photo"><img src="https://source.unsplash.com/600x400/?rhino,grassland,assam" alt="Kaziranga National Park wildlife" loading="lazy"><figcaption>Kaziranga · Assam</figcaption></div>
+     <div class="ww-park-body"><div class="ww-park-top"><span class="ww-park-region">North-East India</span><span class="ww-park-type">Rhino · Tiger</span></div><h3>Kaziranga National Park</h3><p>World-renowned for the Indian one-horned rhinoceros, with floodplain grasslands, wetlands and rich birdlife.</p><div class="ww-park-foot"><span>UNESCO World Heritage</span><a href="https://whc.unesco.org/en/list/337/" target="_blank" rel="noopener noreferrer">UNESCO profile ↗</a></div></div>
+    </article>
+    <article class="ww-park">
+     <div class="ww-park-photo"><img src="https://source.unsplash.com/600x400/?tiger,forest,madhya pradesh" alt="Kanha National Park wildlife" loading="lazy"><figcaption>Kanha · Madhya Pradesh</figcaption></div>
+     <div class="ww-park-body"><div class="ww-park-top"><span class="ww-park-region">Central India</span><span class="ww-park-type">Tiger · Forest</span></div><h3>Kanha National Park</h3><p>Sal forests and open meadows create one of India's most recognisable central Indian wildlife landscapes.</p><div class="ww-park-foot"><span>Forest &amp; meadow country</span><a href="https://forest.mponline.gov.in/Search.aspx?park=2" target="_blank" rel="noopener noreferrer">Safari information ↗</a></div></div>
+    </article>
+    <article class="ww-park">
+     <div class="ww-park-photo"><img src="https://source.unsplash.com/600x400/?tiger,wildlife,india" alt="Bandhavgarh National Park wildlife" loading="lazy"><figcaption>Bandhavgarh · Madhya Pradesh</figcaption></div>
+     <div class="ww-park-body"><div class="ww-park-top"><span class="ww-park-region">Central India</span><span class="ww-park-type">Tiger · Biodiversity</span></div><h3>Bandhavgarh National Park</h3><p>A celebrated tiger landscape known for forested hills, meadows and a strong sense of wilderness.</p><div class="ww-park-foot"><span>Central Indian safari</span><a href="https://forest.mponline.gov.in/Index.aspx" target="_blank" rel="noopener noreferrer">MP Forest booking ↗</a></div></div>
+    </article>
+    <article class="ww-park">
+     <div class="ww-park-photo"><img src="https://source.unsplash.com/600x400/?forest,wildlife,india" alt="Pench National Park wildlife" loading="lazy"><figcaption>Pench · Madhya Pradesh</figcaption></div>
+     <div class="ww-park-body"><div class="ww-park-top"><span class="ww-park-region">Central India</span><span class="ww-park-type">Tiger · Forest</span></div><h3>Pench National Park</h3><p>Teak forests and open woodland across the Madhya Pradesh–Maharashtra landscape, with tiger and diverse wildlife habitats.</p><div class="ww-park-foot"><span>Central Indian wilderness</span><a href="https://www.penchtiger.org/" target="_blank" rel="noopener noreferrer">Pench Tiger Reserve ↗</a></div></div>
+    </article>
+    <article class="ww-park">
+     <div class="ww-park-photo"><img src="https://source.unsplash.com/600x400/?tiger,forest,maharashtra" alt="Tadoba–Andhari Tiger Reserve wildlife" loading="lazy"><figcaption>Tadoba–Andhari · Maharashtra</figcaption></div>
+     <div class="ww-park-body"><div class="ww-park-top"><span class="ww-park-region">Western India</span><span class="ww-park-type">Tiger · Forest</span></div><h3>Tadoba–Andhari Tiger Reserve</h3><p>A major Maharashtra wildlife destination of teak forest, bamboo thickets, lakes and tiger habitat.</p><div class="ww-park-foot"><span>Popular tiger reserve</span><a href="https://mytadoba.mahaforest.gov.in/" target="_blank" rel="noopener noreferrer">Official booking ↗</a></div></div>
+    </article>
+    <article class="ww-park">
+     <div class="ww-park-photo"><img src="https://source.unsplash.com/600x400/?lion,gujarat,forest" alt="Gir National Park wildlife" loading="lazy"><figcaption>Gir · Gujarat</figcaption></div>
+     <div class="ww-park-body"><div class="ww-park-top"><span class="ww-park-region">Western India</span><span class="ww-park-type">Asiatic Lion</span></div><h3>Gir National Park &amp; Sanctuary</h3><p>The last natural home of the Asiatic lion, with dry deciduous forest and distinctive Saurashtra landscapes.</p><div class="ww-park-foot"><span>Asiatic lion country</span><a href="https://girlion.gujarat.gov.in/" target="_blank" rel="noopener noreferrer">Gir Lion project ↗</a></div></div>
+    </article>
+    <article class="ww-park">
+     <div class="ww-park-photo"><img src="https://source.unsplash.com/600x400/?mangrove,tiger,sundarbans" alt="Sundarbans National Park wildlife" loading="lazy"><figcaption>Sundarbans · West Bengal</figcaption></div>
+     <div class="ww-park-body"><div class="ww-park-top"><span class="ww-park-region">East India</span><span class="ww-park-type">Mangrove · Tiger</span></div><h3>Sundarbans National Park</h3><p>A remarkable tidal mangrove ecosystem of creeks, islands and forest, home to the Bengal tiger and specialised wildlife.</p><div class="ww-park-foot"><span>UNESCO mangrove wilderness</span><a href="https://whc.unesco.org/en/list/452/" target="_blank" rel="noopener noreferrer">UNESCO profile ↗</a></div></div>
+    </article>
+    <article class="ww-park">
+     <div class="ww-park-photo"><img src="https://source.unsplash.com/600x400/?elephant,forest,kerala" alt="Periyar National Park wildlife" loading="lazy"><figcaption>Periyar · Kerala</figcaption></div>
+     <div class="ww-park-body"><div class="ww-park-top"><span class="ww-park-region">South India</span><span class="ww-park-type">Elephant · Birdlife</span></div><h3>Periyar National Park</h3><p>Evergreen forest and the lake landscape of the Western Ghats, with opportunities to appreciate elephants and birdlife.</p><div class="ww-park-foot"><span>Western Ghats</span><a href="https://www.periyartigerreserve.org/" target="_blank" rel="noopener noreferrer">Periyar Tiger Reserve ↗</a></div></div>
+    </article>
+    <article class="ww-park">
+     <div class="ww-park-photo"><img src="https://source.unsplash.com/600x400/?tiger,forest,karnataka" alt="Bandipur National Park wildlife" loading="lazy"><figcaption>Bandipur · Karnataka</figcaption></div>
+     <div class="ww-park-body"><div class="ww-park-top"><span class="ww-park-region">South India</span><span class="ww-park-type">Elephant · Tiger</span></div><h3>Bandipur National Park</h3><p>Part of the Nilgiri Biosphere landscape, with dry and moist deciduous forests supporting elephants, tigers and other wildlife.</p><div class="ww-park-foot"><span>Nilgiri landscape</span><a href="https://bandipurtigerreserve.org/" target="_blank" rel="noopener noreferrer">Bandipur reserve ↗</a></div></div>
+    </article>
+    <article class="ww-park">
+     <div class="ww-park-photo"><img src="https://source.unsplash.com/600x400/?snow,leopard,mountains" alt="Hemis National Park wildlife" loading="lazy"><figcaption>Hemis · Ladakh</figcaption></div>
+     <div class="ww-park-body"><div class="ww-park-top"><span class="ww-park-region">Himalayan India</span><span class="ww-park-type">Snow Leopard</span></div><h3>Hemis National Park</h3><p>High-altitude mountains and rugged valleys offer a very different wildlife journey in snow leopard habitat.</p><div class="ww-park-foot"><span>High-altitude wilderness</span><a href="https://www.incredibleindia.gov.in/" target="_blank" rel="noopener noreferrer">Incredible India ↗</a></div></div>
+    </article>
+    <article class="ww-park">
+     <div class="ww-park-photo"><img src="https://source.unsplash.com/600x400/?grassland,wildlife,assam" alt="Manas National Park wildlife" loading="lazy"><figcaption>Manas · Assam</figcaption></div>
+     <div class="ww-park-body"><div class="ww-park-top"><span class="ww-park-region">North-East India</span><span class="ww-park-type">Pygmy Hog · Florican</span></div><h3>Manas National Park</h3><p>Terai grasslands, riverine forests and Himalayan foothills shelter rare grassland wildlife and remarkable biodiversity.</p><div><span class="ww-status">Pygmy hog · Critically Endangered</span><span class="ww-status">Bengal florican · Critically Endangered</span></div><div class="ww-park-foot"><span>UNESCO World Heritage</span><a href="https://whc.unesco.org/en/list/338/" target="_blank" rel="noopener noreferrer">UNESCO profile ↗</a></div></div>
+    </article>
+    <article class="ww-park">
+     <div class="ww-park-photo"><img src="https://source.unsplash.com/600x400/?mountain,forest,kashmir" alt="Dachigam National Park wildlife" loading="lazy"><figcaption>Dachigam · Jammu &amp; Kashmir</figcaption></div>
+     <div class="ww-park-body"><div class="ww-park-top"><span class="ww-park-region">North India</span><span class="ww-park-type">Hangul</span></div><h3>Dachigam National Park</h3><p>Mountain forests and alpine meadows near Srinagar form the best-known habitat of the Kashmir stag, or Hangul.</p><div><span class="ww-status">Hangul · Critically Endangered at national level</span></div><div class="ww-park-foot"><span>High-altitude forest</span><a href="https://jkwildlife.com/" target="_blank" rel="noopener noreferrer">J&amp;K Wildlife ↗</a></div></div>
+    </article>
+    <article class="ww-park">
+     <div class="ww-park-photo"><img src="https://source.unsplash.com/600x400/?desert,bird,rajasthan" alt="Desert National Park wildlife" loading="lazy"><figcaption>Desert National Park · Rajasthan</figcaption></div>
+     <div class="ww-park-body"><div class="ww-park-top"><span class="ww-park-region">Thar Desert</span><span class="ww-park-type">Grassland · Bustard</span></div><h3>Desert National Park</h3><p>A vast arid ecosystem of dunes, rocky terrain and grassland, important for the Great Indian Bustard.</p><div><span class="ww-status">Great Indian bustard · Critically Endangered</span></div><div class="ww-park-foot"><span>Rare desert birdlife</span><a href="https://forest.rajasthan.gov.in/" target="_blank" rel="noopener noreferrer">Rajasthan Forest ↗</a></div></div>
+    </article>
+    <article class="ww-park">
+     <div class="ww-park-photo"><img src="https://source.unsplash.com/600x400/?rhino,grassland,terai" alt="Dudhwa National Park wildlife" loading="lazy"><figcaption>Dudhwa · Uttar Pradesh</figcaption></div>
+     <div class="ww-park-body"><div class="ww-park-top"><span class="ww-park-region">Terai</span><span class="ww-park-type">Rhino · Swamp Deer</span></div><h3>Dudhwa National Park</h3><p>Terai grasslands and sal forest support swamp deer, tiger, elephants and a reintroduced one-horned rhinoceros population.</p><div><span class="ww-status">One-horned rhino · Vulnerable</span></div><div class="ww-park-foot"><span>Terai ecosystem</span><a href="https://upecotourism.in/" target="_blank" rel="noopener noreferrer">UP Eco Tourism ↗</a></div></div>
+    </article>
+    <article class="ww-park">
+     <div class="ww-park-photo"><img src="https://source.unsplash.com/600x400/?river,forest,madhya pradesh" alt="Panna National Park wildlife" loading="lazy"><figcaption>Panna · Madhya Pradesh</figcaption></div>
+     <div class="ww-park-body"><div class="ww-park-top"><span class="ww-park-region">Central India</span><span class="ww-park-type">Tiger · River landscape</span></div><h3>Panna National Park</h3><p>Dry deciduous forest, the Ken River and dramatic escarpments make Panna a distinctive central Indian landscape.</p><div><span class="ww-status">Tiger · Endangered</span></div><div class="ww-park-foot"><span>Ken River country</span><a href="https://forest.mponline.gov.in/" target="_blank" rel="noopener noreferrer">MP Forest ↗</a></div></div>
+    </article>
    </div>
    <p class="ww-copy" style="font-size:10px;margin-top:18px">Park names and categories follow the relevant protected-area and tourism authorities. Tadoba–Andhari is presented as a tiger reserve; Gir is a national park and wildlife sanctuary complex. Always confirm current access, zones and safari rules before travel.</p>
   </div>
  </section>
 
- <section class="ww-section ww-conservation" id="wildlife-conservation">
+ <section class="ww-section ww-conservation ww-alt" id="wildlife-conservation">
   <div class="ww-wrap">
    <div class="ww-kicker">Meet the rare residents of these landscapes</div>
    <h2 class="ww-title">A journey shaped by the species you hope to encounter.</h2>
-   <p class="ww-copy" style="max-width:790px">These are not guaranteed sightings or a checklist. They are conservation stories connected to particular habitats. Global IUCN categories are shown where stated; Hangul is identified as Critically Endangered at the national level. Always check current park guidance and species distribution before travel.</p>
+   <p class="ww-copy" style="max-width:800px">These are not guaranteed sightings or a checklist. They are conservation stories connected to particular habitats. Global IUCN categories are shown where stated; Hangul is identified as Critically Endangered at the national level. Always check current park guidance and species distribution before travel.</p>
    <div class="ww-species-grid">
     <article class="ww-species-card"><span class="ww-status">Endangered · EN</span><b>Bengal Tiger</b><p>Central Indian forests, Terai reserves and the Sundarbans are among its important protected landscapes.</p></article>
     <article class="ww-species-card"><span class="ww-status">Endangered · EN</span><b>Asiatic Lion</b><p>Gir and the wider Saurashtra landscape in Gujarat remain the only wild home of the Asiatic lion.</p></article>
@@ -319,6 +371,7 @@ No invented park-specific photographs are used for other parks.
    <p class="ww-forest-note" style="margin-top:18px">Conservation categories are global IUCN Red List categories unless specifically labelled national. Species may use habitats seasonally or across wider landscapes; presence does not imply a guaranteed sighting.</p>
   </div>
  </section>
+
  <section class="ww-section">
   <div class="ww-wrap ww-feature-grid">
    <div class="ww-feature-copy">
@@ -330,17 +383,17 @@ No invented park-specific photographs are used for other parks.
     <a class="ww-text-link" href="/contact/">Enquire about a Ranthambore safari <span>↗</span></a>
    </div>
    <div class="ww-feature-photo">
-    <img src="https://bmtravelgroup.com/wp-content/uploads/2026/04/ranthambhore-national-park-scaled.jpg" alt="Wildlife landscape at Ranthambore National Park, Rajasthan, India" loading="lazy">
+    <img src="https://source.unsplash.com/1000x700/?tiger,ranthambore,india" alt="Wildlife landscape at Ranthambore National Park, Rajasthan, India" loading="lazy">
     <div class="ww-photo-caption">Ranthambore · Rajasthan · India</div>
    </div>
   </div>
  </section>
 
- <section class="ww-section" id="leopard-landscapes">
+ <section class="ww-section ww-alt" id="leopard-landscapes">
   <div class="ww-wrap">
    <div class="ww-kicker">Beyond the classic national parks</div>
    <h2 class="ww-title">Leopard country. Two very different worlds.</h2>
-   <p class="ww-copy" style="max-width:760px">Some of India's most compelling wildlife journeys take place in conservation reserves and distinctive landscapes beyond the traditional national-park circuit. Jawai and Jhalana deserve their own place in a considered Rajasthan itinerary.</p>
+   <p class="ww-copy" style="max-width:780px">Some of India's most compelling wildlife journeys take place in conservation reserves and distinctive landscapes beyond the traditional national-park circuit. Jawai and Jhalana deserve their own place in a considered Rajasthan itinerary.</p>
    <div class="ww-special-grid">
     <article class="ww-special"><div class="ww-special-meta">Pali district · Rajasthan · Leopard landscape</div><h3>Jawai – the granite hills.</h3><p>Jawai's boulder-strewn hills, scrub and reservoirs create a striking landscape where leopards share space with local communities. It is a conservation-reserve landscape, not a national park, and is suited to a slower, place-led leopard journey.</p><p><span class="ww-status">Leopard · Vulnerable</span><span class="ww-status">Rocky scrub habitat</span></p><a class="ww-text-link" href="https://forest.rajasthan.gov.in/content/raj/forest/en/aboutus/departmental-wings/wildlife/details-of-protected-area-.html" target="_blank" rel="noopener noreferrer">Rajasthan protected-area records ↗</a></article>
     <article class="ww-special"><div class="ww-special-meta">Jaipur · Rajasthan · Urban forest</div><h3>Jhalana–Amagarh – wilderness beside the city.</h3><p>Set within Jaipur's Aravalli landscape, Jhalana is known for leopard habitat in a compact dry-deciduous forest. Nearby Amagarh adds another conservation landscape to consider. It pairs naturally with Jaipur's forts, palaces and heritage stays.</p><p><span class="ww-status">Leopard · Vulnerable</span><span class="ww-status">Aravalli dry forest</span></p><a class="ww-text-link" href="https://forest.rajasthan.gov.in/content/dam/raj/forest/rajasthan-wild-life/pdf/Eco-Tourism/Brouchers/Jhalana%20Leopard%20Reserve.pdf" target="_blank" rel="noopener noreferrer">Official Jhalana brochure ↗</a></article>
@@ -348,27 +401,28 @@ No invented park-specific photographs are used for other parks.
    <p class="ww-forest-note" style="margin-top:16px">Jawai and Jhalana are presented as conservation / leopard landscapes, not mislabelled as national parks. Sightings remain subject to wildlife movement, local protocols and authorised safari operations.</p>
   </div>
  </section>
+
  <section class="ww-section ww-india">
   <div class="ww-wrap">
    <div class="ww-kicker">Explore India's wilderness by region</div>
    <h2 class="ww-title">Choose the landscape that calls to you.</h2>
    <div class="ww-region-grid">
-    <article class="ww-region"><small>North & North-West</small><h3>Forests, foothills & fort country</h3><p>Corbett, Ranthambore, Sariska and Dudhwa offer very different introductions to India's northern wildlife landscapes.</p><a href="#india-national-parks">Explore northern parks ↗</a></article>
+    <article class="ww-region"><small>North &amp; North-West</small><h3>Forests, foothills &amp; fort country</h3><p>Corbett, Ranthambore, Sariska and Dudhwa offer very different introductions to India's northern wildlife landscapes.</p><a href="#india-national-parks">Explore northern parks ↗</a></article>
     <article class="ww-region"><small>Central India</small><h3>The heart of tiger country</h3><p>Kanha, Bandhavgarh, Pench, Panna and Satpura can be considered for a multi-park central Indian safari.</p><a href="https://ntca.gov.in/tiger-reserves/" target="_blank" rel="noopener noreferrer">Explore tiger reserves ↗</a></article>
-    <article class="ww-region"><small>East, North-East & South</small><h3>Rhinos, mangroves & elephants</h3><p>Kaziranga, Manas, Sundarbans, Periyar, Bandipur and Nagarhole reveal the breadth of India's wildlife habitats.</p><a href="https://www.incredibleindia.gov.in/content/incredible-india-v2/en/experiences/nature-and-wildlife/national-parks.html" target="_blank" rel="noopener noreferrer">India national parks guide ↗</a></article>
+    <article class="ww-region"><small>East, North-East &amp; South</small><h3>Rhinos, mangroves &amp; elephants</h3><p>Kaziranga, Manas, Sundarbans, Periyar, Bandipur and Nagarhole reveal the breadth of India's wildlife habitats.</p><a href="https://www.incredibleindia.gov.in/content/incredible-india-v2/en/experiences/nature-and-wildlife/national-parks.html" target="_blank" rel="noopener noreferrer">India national parks guide ↗</a></article>
    </div>
   </div>
  </section>
 
- <section class="ww-section ww-international" id="nepal-sri-lanka">
+ <section class="ww-section ww-alt ww-international" id="nepal-sri-lanka">
   <div class="ww-wrap">
    <div class="ww-kicker">Beyond India · Regional safari journeys</div>
-   <h2 class="ww-title">Continue into Nepal & Sri Lanka.</h2>
-   <p class="ww-copy" style="max-width:760px">For travellers with more time, a wildlife itinerary can extend beyond India. Nepal and Sri Lanka each bring a distinct natural setting and a different rhythm of discovery.</p>
+   <h2 class="ww-title">Continue into Nepal &amp; Sri Lanka.</h2>
+   <p class="ww-copy" style="max-width:780px">For travellers with more time, a wildlife itinerary can extend beyond India. Nepal and Sri Lanka each bring a distinct natural setting and a different rhythm of discovery.</p>
    <div class="ww-country-grid">
     <article class="ww-country">
      <div class="ww-kicker">Nepal · Terai wilderness</div>
-     <h3>Rhino country & riverine forests.</h3>
+     <h3>Rhino country &amp; riverine forests.</h3>
      <p>Nepal's lowland national parks combine grasslands, river systems and subtropical forests. Chitwan is known for one-horned rhinoceros, gharial and rich birdlife; Bardia offers a more remote-feeling western Terai wilderness.</p>
      <div class="ww-country-list">
       <a href="https://ntb.gov.np/chitwan-national-park" target="_blank" rel="noopener noreferrer">Chitwan National Park ↗</a>
@@ -379,13 +433,13 @@ No invented park-specific photographs are used for other parks.
     </article>
     <article class="ww-country">
      <div class="ww-kicker">Sri Lanka · Island wildlife</div>
-     <h3>Leopards, elephants & wild landscapes.</h3>
+     <h3>Leopards, elephants &amp; wild landscapes.</h3>
      <p>Sri Lanka offers varied wildlife experiences within a compact island. Yala is renowned for leopard habitat; Wilpattu is known for forest and natural lakes; Udawalawe is strongly associated with elephant country.</p>
      <div class="ww-country-list">
       <a href="https://www.srilanka.travel/wild-safaris" target="_blank" rel="noopener noreferrer">Yala National Park ↗</a>
       <a href="https://www.srilanka.travel/wild-safaris" target="_blank" rel="noopener noreferrer">Wilpattu National Park ↗</a>
       <a href="https://www.srilanka.travel/wild-safaris" target="_blank" rel="noopener noreferrer">Udawalawe National Park ↗</a>
-      <a href="https://www.destinationsrilanka.travel/experiences/nature-wildlife/" target="_blank" rel="noopener noreferrer">Minneriya & more ↗</a>
+      <a href="https://www.destinationsrilanka.travel/experiences/nature-wildlife/" target="_blank" rel="noopener noreferrer">Minneriya &amp; more ↗</a>
      </div>
      <p class="ww-country-note">Minneriya and Kaudulla are also known for seasonal elephant gatherings. Wildlife movement and sightings vary with rainfall and local conditions.</p>
      <a class="ww-text-link" href="/exploresrilanka/">Discover Sri Lanka <span>↗</span></a>
@@ -398,13 +452,13 @@ No invented park-specific photographs are used for other parks.
   <div class="ww-wrap">
    <div class="ww-kicker">Shape your safari around what matters</div>
    <h2 class="ww-title">Different ways to experience the wild.</h2>
-   <p class="ww-copy" style="max-width:720px">A safari can be the centrepiece of a journey or one chapter in a wider itinerary. We can consider the pace, interests and comfort level that best suit your travel party.</p>
+   <p class="ww-copy" style="max-width:740px">A safari can be the centrepiece of a journey or one chapter in a wider itinerary. We can consider the pace, interests and comfort level that best suit your travel party.</p>
    <div class="ww-experience-grid">
     <article class="ww-experience"><div class="ww-number">01</div><h3>Big-cat tracking</h3><p>Build a journey around tiger landscapes in India or leopard habitats in Sri Lanka, with realistic expectations and responsible viewing.</p></article>
-    <article class="ww-experience"><div class="ww-number">02</div><h3>Rhino & elephant country</h3><p>Explore Kaziranga and Chitwan for rhino habitats, or consider Sri Lanka's elephant landscapes and India's southern forests.</p></article>
-    <article class="ww-experience"><div class="ww-number">03</div><h3>Birding & wetlands</h3><p>Include wetlands, river systems, grasslands and forest habitats for birdlife and slower, observation-led days.</p></article>
+    <article class="ww-experience"><div class="ww-number">02</div><h3>Rhino &amp; elephant country</h3><p>Explore Kaziranga and Chitwan for rhino habitats, or consider Sri Lanka's elephant landscapes and India's southern forests.</p></article>
+    <article class="ww-experience"><div class="ww-number">03</div><h3>Birding &amp; wetlands</h3><p>Include wetlands, river systems, grasslands and forest habitats for birdlife and slower, observation-led days.</p></article>
     <article class="ww-experience"><div class="ww-number">04</div><h3>Multi-park journeys</h3><p>Combine selected parks where geography, season, travel time and availability make a sensible itinerary.</p></article>
-    <article class="ww-experience"><div class="ww-number">05</div><h3>Wildlife & heritage</h3><p>Balance safari time with historic cities, cultural encounters, landscapes and distinctive accommodation.</p></article>
+    <article class="ww-experience"><div class="ww-number">05</div><h3>Wildlife &amp; heritage</h3><p>Balance safari time with historic cities, cultural encounters, landscapes and distinctive accommodation.</p></article>
     <article class="ww-experience"><div class="ww-number">06</div><h3>Private naturalist-led time</h3><p>Where available, request knowledgeable local naturalists and guides who interpret habitats as well as wildlife sightings.</p></article>
    </div>
   </div>
@@ -445,7 +499,7 @@ No invented park-specific photographs are used for other parks.
   <div class="ww-wrap">
    <div class="ww-links-panel">
     <div class="ww-kicker">Continue planning with BM Travel Group</div>
-    <h3 style="font:400 28px 'Playfair Display',serif;color:var(--ink);margin:8px 0">Build a richer journey around your safari.</h3>
+    <h3 style="font:400 26px 'Playfair Display',serif;color:var(--ink);margin:8px 0">Build a richer journey around your safari.</h3>
     <p class="ww-copy">Pair wildlife with private touring, restorative stays or a wider South Asian itinerary.</p>
     <div class="ww-links-grid">
      <a href="/private-journeys/">Private Journeys ↗</a>
@@ -457,7 +511,7 @@ No invented park-specific photographs are used for other parks.
      <a href="/explorebhutan/">Explore Bhutan ↗</a>
      <a href="/exploresrilanka/">Explore Sri Lanka ↗</a>
      <a href="/journal/">BMTG Journal ↗</a>
-     <a href="/travel-insights-and-faqs/">Travel Insights & FAQs ↗</a>
+     <a href="/travel-insights-and-faqs/">Travel Insights &amp; FAQs ↗</a>
      <a href="/contact/">Contact BM Travel Group ↗</a>
     </div>
    </div>
@@ -475,7 +529,7 @@ No invented park-specific photographs are used for other parks.
 
  <section class="ww-sources" aria-label="Official wildlife and park information">
   <div class="ww-wrap ww-sources-inner">
-   <div class="ww-sources-title">Official park & destination references</div>
+   <div class="ww-sources-title">Official park &amp; destination references</div>
    <div class="ww-source-links">
     <a href="https://ntca.gov.in/tiger-reserves/" target="_blank" rel="noopener noreferrer">India Tiger Reserves ↗</a>
     <a href="https://www.incredibleindia.gov.in/content/incredible-india-v2/en/experiences/nature-and-wildlife/national-parks.html" target="_blank" rel="noopener noreferrer">India National Parks ↗</a>
@@ -492,7 +546,7 @@ No invented park-specific photographs are used for other parks.
    <div class="ww-directory-links">
     <a href="/signature-journeys/">Signature Journeys</a>
     <a href="/private-journeys/">Private Journeys</a>
-    <a href="/wildlife/">Wildlife & Safaris</a>
+    <a href="/wildlife/">Wildlife &amp; Safaris</a>
     <a href="/wellness/">Wellness Journeys</a>
     <a href="/rail/">Luxury Rail</a>
    </div>
@@ -509,7 +563,7 @@ No invented park-specific photographs are used for other parks.
       "@type": "WebPage",
       "@id": "https://bmtravelgroup.com/wildlife/#webpage",
       "url": "https://bmtravelgroup.com/wildlife/",
-      "name": "Wildlife & Safaris in India, Nepal and Sri Lanka | BM Travel Group",
+      "name": "Wildlife &amp; Safaris in India, Nepal and Sri Lanka | BM Travel Group",
       "description": "Discover private wildlife safaris across India's celebrated national parks, tiger reserves and leopard landscapes including Jawai and Jhalana, with journeys to Nepal and Sri Lanka.",
       "inLanguage": "en-IN",
       "about": {"@id": "https://bmtravelgroup.com/#organization"},
@@ -520,7 +574,7 @@ No invented park-specific photographs are used for other parks.
       "@id": "https://bmtravelgroup.com/wildlife/#breadcrumb",
       "itemListElement": [
         {"@type": "ListItem", "position": 1, "name": "Home", "item": "https://bmtravelgroup.com/"},
-        {"@type": "ListItem", "position": 2, "name": "Wildlife & Safaris", "item": "https://bmtravelgroup.com/wildlife/"}
+        {"@type": "ListItem", "position": 2, "name": "Wildlife &amp; Safaris", "item": "https://bmtravelgroup.com/wildlife/"}
       ]
     },
     {
